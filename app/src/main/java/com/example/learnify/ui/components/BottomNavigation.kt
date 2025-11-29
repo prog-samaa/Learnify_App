@@ -30,9 +30,9 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.learnify.data.model.BottomNavItem
 import com.example.learnify.ui.theme.BarBackground
-import com.example.learnify.ui.theme.InactiveColor
 import com.example.learnify.ui.theme.PrimaryColor
 import com.example.learnify.ui.theme.SecondaryColor
+import com.example.learnify.ui.theme.gray
 import kotlin.collections.forEach
 
 @Composable
@@ -111,7 +111,7 @@ fun BottomNavigation(
                         Icon(
                             imageVector = item.icon,
                             contentDescription = item.title,
-                            tint = InactiveColor,
+                            tint = gray,
                             modifier = Modifier.size(24.dp)
                         )
                     }

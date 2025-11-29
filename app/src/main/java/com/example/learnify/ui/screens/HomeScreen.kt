@@ -12,10 +12,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.example.learnify.R
 import com.example.learnify.ui.components.CategoryButton
 import com.example.learnify.ui.components.CourseRowScreen
@@ -25,7 +27,10 @@ import com.example.learnify.ui.theme.PrimaryColor
 
 @Composable
 fun HomeScreen(
-    selected: String?, onSelect: (String) -> Unit, onHomeClicked: () -> Unit
+    selected: String?,
+    onSelect: (String) -> Unit,
+    onHomeClicked: () -> Unit,
+    navController: NavHostController
 ) {
     val programmingTrendingChannelId = "UC8butISFwT-Wl7EV0hUK0BQ"
     val medicalTrendingChannelId = "UCNI0qOojpkhsUtaQ4_2NUhQ"
@@ -40,7 +45,7 @@ fun HomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(top = 16.dp)
-            .background(AppBackgroundColor)
+
 
     ) {
         if (selected == null) {
@@ -57,24 +62,26 @@ fun HomeScreen(
             ) {
                 Text(
                     text = "Categories",
-                    fontSize = 28.sp,
+                    fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    color = PrimaryColor
+                    color = PrimaryColor,
+                    fontFamily = FontFamily(Font(R.font.playwrite))
+
                 )
-                Image(
-                    painter = painterResource(id = R.drawable.category_icon),
-                    contentDescription = "category Icon",
-                    modifier = Modifier
-                        .size(37.dp)
-                        .padding(end = 7.dp)
-                )
+//                Image(
+//                    painter = painterResource(id = R.drawable.category_icon),
+//                    contentDescription = "category Icon",
+//                    modifier = Modifier
+//                        .size(37.dp)
+//                        .padding(end = 7.dp)
+//                )
             }
             CategoryButton(selected = selected, onSelect = onSelect)
 
             CourseRowScreen(
                 query = if (searchQuery.isBlank()) "Courses" else searchQuery,
                 isSearch = searchQuery.isNotBlank(),
-                isTrending = false
+                navController = navController
             )
 
 
@@ -84,37 +91,48 @@ fun HomeScreen(
                 "Programming" -> CategoryScreen(
                     CategoryName = "Programming Core",
                     QueryGrid = "programming courses",
-                    TrendingChannelId = programmingTrendingChannelId
+                    TrendingChannelId = programmingTrendingChannelId,
+                    navController = navController
                 )
 
                 "Engineering" -> CategoryScreen(
                     CategoryName = "Engineering Core",
                     QueryGrid = "Engineering courses",
-                    TrendingChannelId = engineeringTrendingChannelId
+                    TrendingChannelId = engineeringTrendingChannelId,
+                    navController = navController
+
                 )
 
                 "Medical" -> CategoryScreen(
                     CategoryName = "Medical Core",
                     QueryGrid = "medical courses",
-                    TrendingChannelId = medicalTrendingChannelId
+                    TrendingChannelId = medicalTrendingChannelId,
+                    navController = navController
+
                 )
 
                 "Marketing" -> CategoryScreen(
                     CategoryName = "Marketing Core",
                     QueryGrid = "marketing courses",
-                    TrendingChannelId = marketingTrendingChannelId
+                    TrendingChannelId = marketingTrendingChannelId,
+                    navController = navController
+
                 )
 
                 "Language" -> CategoryScreen(
                     CategoryName = "Language Core",
                     QueryGrid = "language courses",
-                    TrendingChannelId = languageTrendingChannelId
+                    TrendingChannelId = languageTrendingChannelId,
+                    navController = navController
+
                 )
 
                 "Human Development" -> CategoryScreen(
                     CategoryName = "Human Development Core",
                     QueryGrid = "Human Development Courses",
-                    TrendingChannelId = humanDevelopmentTrendingChannelId
+                    TrendingChannelId = humanDevelopmentTrendingChannelId,
+                    navController = navController
+
                 )
             }
         }

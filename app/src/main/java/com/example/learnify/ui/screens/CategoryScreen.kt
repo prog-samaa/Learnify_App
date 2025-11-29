@@ -16,16 +16,20 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.example.learnify.R
 import com.example.learnify.ui.components.CourseGridScreen
 import com.example.learnify.ui.components.CourseRowScreen
 import com.example.learnify.ui.components.LearnifySearchBar
 import com.example.learnify.ui.theme.PrimaryColor
-import com.example.learnify.ui.theme.BlueBackground
+import com.example.learnify.ui.theme.CategoryScreenColor
 
 @Composable
 fun CategoryScreen(
-    CategoryName: String, QueryGrid: String, TrendingChannelId: String
+    CategoryName: String,
+    QueryGrid: String,
+    TrendingChannelId: String,
+    navController: NavHostController
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
@@ -37,7 +41,7 @@ fun CategoryScreen(
                 .fillMaxWidth()
                 .height(260.dp)
                 .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
-                .background(BlueBackground)
+                .background(CategoryScreenColor)
                 .align(Alignment.TopCenter)
         )
 
@@ -84,36 +88,38 @@ fun CategoryScreen(
                     Row(modifier = Modifier.padding(start = 8.dp)) {
                         Text(
                             text = "Trending",
-                            fontSize = 24.sp,
+                            fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
                             color = PrimaryColor,
+                            fontFamily = FontFamily(Font(R.font.playwrite))
+
                         )
-                        Image(
-                            painter = painterResource(id = R.drawable.trending_icon),
-                            contentDescription = "Trending Icon",
-                            modifier = Modifier
-                                .size(30.dp)
-                                .padding(end = 10.dp)
-                        )
+//                        Image(
+//                            painter = painterResource(id = R.drawable.trending_icon),
+//                            contentDescription = "Trending Icon",
+//                            modifier = Modifier
+//                                .size(30.dp)
+//                                .padding(end = 10.dp)
+//                        )
                     }
                 }
             }
 
             item {
                 CourseRowScreen(
-                    cardWeight = 245,
-                    cardHeight = 300,
                     query = TrendingChannelId,
-                    isTrending = true
+                    isTrending = true,
+                    navController = navController
                 )
             }
 
             item {
                 CourseGridScreen(
-                    cardWeight = 240,
+                    cardWeight = 260,
                     cardHeight = 285,
                     query = if (searchQuery.isBlank()) QueryGrid else searchQuery,
-                    isSearch = searchQuery.isNotBlank()
+                    isSearch = searchQuery.isNotBlank(),
+                    navController = navController
                 )
             }
 

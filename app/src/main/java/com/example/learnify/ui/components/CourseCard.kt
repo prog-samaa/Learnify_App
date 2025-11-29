@@ -1,17 +1,25 @@
 package com.example.learnify.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -23,13 +31,32 @@ import com.example.learnify.ui.theme.AppBackgroundColor
 
 @Composable
 fun CourseCard(
-    cardWeight: Int, cardHeight: Int, course: CourseEntity
+    cardWeight: Int, cardHeight: Int,
+    course: CourseEntity,
+    onCourseClick: (CourseEntity) -> Unit
 ) {
+    var pressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(if (pressed) 0.95f else 1f)
     Card(
         modifier = Modifier
             .width(cardWeight.dp)
             .height(cardHeight.dp)
-            .padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
+            .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        pressed = true
+                        tryAwaitRelease()
+                        pressed = false
+                    },
+                    onTap = {
+                        onCourseClick(course)
+                    }
+                )
+            }
+        ,
+
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 15.dp)
     ) {
@@ -56,6 +83,7 @@ fun CourseCard(
                             translationY = -6f
                         })
             }
+
 
             Column(
                 modifier = Modifier

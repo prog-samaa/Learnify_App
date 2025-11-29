@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.learnify.ui.CourseViewModel
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.navigation.NavHostController
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -20,7 +21,8 @@ fun CourseRowScreen(
     viewModel: CourseViewModel = viewModel(),
     query: String,
     isTrending: Boolean = false,
-    isSearch :Boolean = false
+    isSearch :Boolean = false,
+    navController: NavHostController
 ) {
     val categoryKey = viewModel.detectCategoryKeyFromQuery(query)
 
@@ -64,12 +66,29 @@ fun CourseRowScreen(
     when {
         isLoading -> Loading()
         error != null -> Text(text = error ?: "Unknown error", modifier = Modifier.padding(16.dp))
-        courses.isEmpty() -> Text(text = error ?: "No Courses Found", modifier = Modifier.padding(16.dp))
+        courses.isEmpty() -> Text(
+            text = error ?: "No Courses Found",
+            modifier = Modifier.padding(16.dp)
+        )
+
         else -> LazyRow(modifier = Modifier.padding(8.dp)) {
             items(courses) { course ->
-                if (isTrending) TrendingCourseCard(course)
-                else CourseCard(course = course, cardWeight = cardWeight, cardHeight = cardHeight)
+                if (isTrending) {
+                    TrendingCourseCard(course = course, onCourseClick = { selectedCourse ->
+                        navController.navigate("courseDetails/${selectedCourse.id}")
+                    })
+                } else {
+                    CourseCard(
+                        course = course,
+                        cardWeight = cardWeight,
+                        cardHeight = cardHeight,
+                        onCourseClick = { selectedCourse ->
+                            navController.navigate("courseDetails/${selectedCourse.id}")
+                        }
+                    )
+                }
             }
+
         }
     }
 }

@@ -9,6 +9,13 @@ import androidx.room.Query
 @Dao
 interface CourseDao {
 
+    @Query("SELECT * FROM course_table WHERE id = :id LIMIT 1")
+    suspend fun getCourseByIdDirect(id: String): CourseEntity?
+
+
+    @Query("SELECT * FROM course_table WHERE id = :courseId LIMIT 1")
+    fun getCourseById(courseId: String): LiveData<CourseEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCourses(courses: List<CourseEntity>)
     // Inserts a list of courses into the database.

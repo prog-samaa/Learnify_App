@@ -24,12 +24,16 @@ fun CategoryButton(
 
     ) {
     val categories = listOf(
-        CategoryItem("Programming", painterResource(R.drawable.programming)),
-        CategoryItem("Engineering", painterResource(R.drawable.engineering)),
-        CategoryItem("Language", painterResource(R.drawable.language)),
+
         CategoryItem("Marketing", painterResource(R.drawable.marketing)),
         CategoryItem("Medical", painterResource(R.drawable.medical)),
-        CategoryItem("Human Development", painterResource(R.drawable.human_development))
+        CategoryItem("Language", painterResource(R.drawable.language)),
+        CategoryItem("Engineering", painterResource(R.drawable.engineering)),
+        CategoryItem("Human Development", painterResource(R.drawable.human_development)),
+        CategoryItem("Programming", painterResource(R.drawable.programming))
+
+
+
     )
     LazyRow(
         modifier = Modifier

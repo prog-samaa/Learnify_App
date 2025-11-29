@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.learnify.ui.CourseViewModel
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.navigation.NavHostController
 
 @Composable
 fun CourseGridScreen(
@@ -18,7 +19,8 @@ fun CourseGridScreen(
     cardHeight: Int = 300,
     query: String,
     isSearch :Boolean = false,
-    viewModel: CourseViewModel = viewModel()
+    viewModel: CourseViewModel = viewModel(),
+    navController: NavHostController
 ) {
     val categoryKey = viewModel.detectCategoryKeyFromQuery(query)
 
@@ -63,7 +65,13 @@ fun CourseGridScreen(
                     .height(gridHeight.dp)
             ) {
                 items(courses) { course ->
-                    CourseCard(course = course, cardWeight = cardWeight, cardHeight = cardHeight)
+                    CourseCard(course = course,
+                        cardWeight = cardWeight,
+                        cardHeight = cardHeight,
+                        onCourseClick = { selectedCourse ->
+                            navController.navigate("courseDetails/${selectedCourse.id}")
+                        }
+                    )
                 }
             }
         }

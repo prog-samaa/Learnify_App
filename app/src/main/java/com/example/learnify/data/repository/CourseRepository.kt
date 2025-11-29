@@ -81,6 +81,10 @@ class CourseRepository(private val dao: CourseDao) {
         }
     }
 
+
+
+    fun getCourseById(id: String): LiveData<CourseEntity> = dao.getCourseById(id)
+
     // Calculate a rating for a playlist based on views and likes
     private suspend fun calculateRatingForPlaylist(playlistId: String): Float? {
         return try {

@@ -35,13 +35,17 @@ import coil.compose.SubcomposeAsyncImageContent
 import com.example.learnify.data.local.CourseEntity
 
 @Composable
-fun TrendingCourseCard(course: CourseEntity) {
+fun TrendingCourseCard(
+    course: CourseEntity,
+    onCourseClick: (CourseEntity) -> Unit
+)
+{
     var pressed by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(if (pressed) 0.95f else 1f)
     Card(
         modifier = Modifier
-            .width(320.dp)
-            .height(190.dp)
+            .width(330.dp)
+            .height(210.dp)
             .padding(horizontal = 8.dp)
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .pointerInput(Unit) {
@@ -50,6 +54,9 @@ fun TrendingCourseCard(course: CourseEntity) {
                         pressed = true
                         tryAwaitRelease()
                         pressed = false
+                    },
+                    onTap = {
+                        onCourseClick(course)
                     }
                 )
             },

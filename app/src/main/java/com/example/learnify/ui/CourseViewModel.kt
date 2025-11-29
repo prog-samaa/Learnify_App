@@ -6,6 +6,8 @@ import com.example.learnify.data.local.CourseDatabase
 import com.example.learnify.data.local.CourseEntity
 import com.example.learnify.data.repository.CourseRepository
 import com.example.learnify.data.repository.toEntity
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 
 class CourseViewModel(application: Application) : AndroidViewModel(application) {
@@ -50,6 +52,24 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
     private val loadedSearchQueries = mutableSetOf<String>()
     private val loadedCategories = mutableSetOf<String>()
     private val loadedTrending = mutableSetOf<String>()
+
+    fun getCoursesByIds(ids: List<String>): LiveData<List<CourseEntity>> {
+        val result = MutableLiveData<List<CourseEntity>>()
+
+        viewModelScope.launch {
+            val list = ids.mapNotNull { id ->
+                dao.getCourseByIdDirect(id)
+            }
+            result.postValue(list)
+        }
+
+        return result
+    }
+
+
+    fun getCourseById(id: String): LiveData<CourseEntity> {
+        return repository.getCourseById(id)
+    }
 
     // detect category
      fun detectCategoryKeyFromQuery(query: String): String {

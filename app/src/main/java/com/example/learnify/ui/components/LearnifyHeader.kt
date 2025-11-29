@@ -10,6 +10,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,7 +33,7 @@ fun LearnifyHeader(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 15.dp),
+                .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
@@ -43,14 +45,16 @@ fun LearnifyHeader(
                     painter = painterResource(id = R.drawable.learnify_icon),
                     contentDescription = "Learnify Icon",
                     modifier = Modifier
-                        .size(30.dp)
+                        .size(50.dp)
                         .padding(end = 6.dp)
                 )
                 Text(
                     text = "Learnify",
-                    fontSize = 28.sp,
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = PrimaryColor,
+                    fontFamily = FontFamily(Font(R.font.playwrite))
+
                 )
             }
 
