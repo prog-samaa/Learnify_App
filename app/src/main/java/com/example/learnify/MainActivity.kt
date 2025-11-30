@@ -24,6 +24,8 @@ import com.example.learnify.viewmodel.UserViewModel
 import com.example.learnify.ui.TimerViewModel
 import com.example.learnify.ui.screens.PomodoroScreen
 import com.google.firebase.auth.FirebaseAuth
+import com.example.learnify.ui.screens.ToDoScreen
+
 
 class MainActivity : ComponentActivity() {
 
@@ -48,7 +50,13 @@ class MainActivity : ComponentActivity() {
                 val currentUser = FirebaseAuth.getInstance().currentUser
 
                 val showBottomBar = currentUser != null &&
-                        currentRoute !in listOf("login", "signup", "forgot", "courseDetails/{courseId}", "edit_profile")
+                        currentRoute !in listOf(
+                    "login",
+                    "signup",
+                    "forgot",
+                    "courseDetails/{courseId}",
+                    "edit_profile"
+                )
 
                 Scaffold(
                     modifier = Modifier
@@ -83,7 +91,6 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        // ***** TIMER SCREEN *****
                         composable("pomodoro") {
                             PomodoroScreen(
                                 navController = navController,
@@ -91,7 +98,10 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        composable("todo") { ToDoScreen() }
+                        composable("todo") {
+                            val todoViewModel: ToDoViewModel = viewModel()
+                            ToDoScreen(todoViewModel)
+                        }
 
                         composable("you") {
                             YouScreen(
