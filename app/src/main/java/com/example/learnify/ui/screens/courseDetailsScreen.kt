@@ -6,11 +6,14 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccessTimeFilled
+import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.WatchLater
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,18 +26,29 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.learnify.ui.CourseViewModel
 import com.example.learnify.ui.theme.PrimaryColor
+import androidx.compose.runtime.rememberCoroutineScope
+import com.example.learnify.viewmodel.UserViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun courseDetailsScreen(
     courseId: String?,
     navController: NavHostController,
-    viewModel: CourseViewModel = viewModel()
+    viewModel: CourseViewModel = viewModel(),
+    userViewModel: UserViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    val courseState = courseId?.let { viewModel.getCourseById(it).observeAsState() }
+    val coroutineScope = rememberCoroutineScope()
 
-    courseState?.value?.let { course ->
+    //  استخدام StateFlow
+    val currentCourse by viewModel.currentCourse.collectAsState()
 
+    //  استخدام LaunchedEffect لإعادة تحميل الكورس
+    LaunchedEffect(key1 = courseId) {
+        courseId?.let { viewModel.loadCourse(it) }
+    }
+
+    currentCourse?.let { course ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -66,31 +80,73 @@ fun courseDetailsScreen(
 
                 // Like Button
                 IconButton(onClick = {
-                    Toast.makeText(context, "Toggled Favorite", Toast.LENGTH_SHORT).show()
+                    coroutineScope.launch {
+                        val newFavoriteState = !course.isFavorite
+
+                        viewModel.toggleFavorite(course.id, newFavoriteState)
+
+                        // تحديث في Firebase User
+                        if (newFavoriteState) {
+                            userViewModel.addToFavorites(course.id)
+                            Toast.makeText(context, "Added to favorites", Toast.LENGTH_SHORT).show()
+                        } else {
+                            userViewModel.removeFromFavorites(course.id)
+                            Toast.makeText(context, "Removed from favorites", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 }) {
                     Icon(
                         imageVector = Icons.Default.Favorite,
                         contentDescription = "Like",
-                        tint = Color.Gray
+                        tint = if (course.isFavorite) Color.Red else Color.Gray
+                    )
+                }
+
+                // Watch Later Button
+                IconButton(onClick = {
+                    coroutineScope.launch {
+                        val newWatchLaterState = !course.isWatchLater
+
+                        viewModel.toggleWatchLater(course.id, newWatchLaterState)
+
+                        // تحديث في Firebase User
+                        if (newWatchLaterState) {
+                            userViewModel.addToWatchlist(course.id)
+                            Toast.makeText(context, "Added to watchlist", Toast.LENGTH_SHORT).show()
+                        } else {
+                            userViewModel.removeFromWatchlist(course.id)
+                            Toast.makeText(context, "Removed from watchlist", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.WatchLater,
+                        contentDescription = "Watch Later",
+                        tint = if (course.isWatchLater) Color.Blue else Color.Gray
                     )
                 }
 
                 IconButton(onClick = {
-                    Toast.makeText(context, "Toggled Watch Later", Toast.LENGTH_SHORT).show()
+                    coroutineScope.launch {
+                        val newDoneState = !course.isDone
+                        viewModel.toggleDone(course.id, newDoneState)
+
+                        if (newDoneState) {
+                            userViewModel.addToDoneCourses(course.id)
+                            Toast.makeText(context, "Marked as completed", Toast.LENGTH_SHORT).show()
+                        } else {
+                            userViewModel.removeFromDoneCourses(course.id)
+                            Toast.makeText(context, "Removed from completed", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 }) {
                     Icon(
-                        imageVector = Icons.Default.AccessTimeFilled,
-                        contentDescription = "Watch Later",
-                        tint = Color.Gray
+                        imageVector = Icons.Default.CheckBox,
+                        contentDescription = "Mark as Done",
+                        tint = if (course.isDone) Color(0xFF4CAF50) else Color.Gray
                     )
                 }
 
-                Checkbox(
-                    checked = false,
-                    onCheckedChange = {
-                        Toast.makeText(context, "Toggled Completion", Toast.LENGTH_SHORT).show()
-                    }
-                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -125,6 +181,25 @@ fun courseDetailsScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+        }
+    } ?: run {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFEBEBF8)),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                CircularProgressIndicator(color = PrimaryColor)
+                Text(
+                    text = "Loading course...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
+                )
+            }
         }
     }
 }

@@ -6,26 +6,50 @@ import com.example.learnify.data.local.CourseDatabase
 import com.example.learnify.data.local.CourseEntity
 import com.example.learnify.data.repository.CourseRepository
 import com.example.learnify.data.repository.toEntity
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class CourseViewModel(application: Application) : AndroidViewModel(application) {
     private val dao = CourseDatabase.getDatabase(application).courseDao()
     private val repository = CourseRepository(dao)
+
+    // StateFlow  لحل مشكلة تحديث الـ
+    private val _currentCourse = MutableStateFlow<CourseEntity?>(null)
+    val currentCourse: StateFlow<CourseEntity?> = _currentCourse.asStateFlow()
+
+    // دالة لتحميل الكورس الحالي
+    fun loadCourse(courseId: String) {
+        viewModelScope.launch {
+            val course = dao.getCourseByIdDirect(courseId)
+            _currentCourse.value = course
+        }
+    }
+
+    //  تحميل المفضلة عند بداية التطبيق
+    fun initializeFavorites() {
+        viewModelScope.launch {
+            // تفعيل الـ Observers للتأكد من تحميل البيانات
+            favoriteCourses.value
+            watchLaterCourses.value
+            doneCourses.value
+
+        }
+    }
+
     fun trendingCourses(category: String): LiveData<List<CourseEntity>> {
         return repository.getTrendingLive(category)
     }
+
     private val generalMap = mutableMapOf<String, MutableLiveData<List<CourseEntity>>>()
 
     fun generalCoursesByCategory(category: String): LiveData<List<CourseEntity>> {
         return generalMap.getOrPut(category) { MutableLiveData(emptyList()) }
     }
+
     private val _searchResults = MutableLiveData<List<CourseEntity>>()
     val searchResults: LiveData<List<CourseEntity>> = _searchResults
-
-//    private val _isLoading = MutableLiveData(false)
-//    val isLoading: LiveData<Boolean> = _isLoading
 
     // Loading states
     private val _isTrendingLoading = MutableLiveData(false)
@@ -47,7 +71,6 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
     private val _generalError = MutableLiveData<String?>(null)
     val generalError: LiveData<String?> = _generalError
 
-
     // caches
     private val loadedSearchQueries = mutableSetOf<String>()
     private val loadedCategories = mutableSetOf<String>()
@@ -66,13 +89,12 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
         return result
     }
 
-
     fun getCourseById(id: String): LiveData<CourseEntity> {
         return repository.getCourseById(id)
     }
 
     // detect category
-     fun detectCategoryKeyFromQuery(query: String): String {
+    fun detectCategoryKeyFromQuery(query: String): String {
         val q = query.lowercase()
         return when {
             "program" in q -> "programming"
@@ -181,31 +203,69 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun refreshSearch(query: String) {
-    val q = query.trim()
-    if (q.isEmpty()) return
+        val q = query.trim()
+        if (q.isEmpty()) return
 
-    val categoryKey = detectCategoryKeyFromQuery(q)
-    val liveData = generalMap.getOrPut(categoryKey) { MutableLiveData(emptyList()) }
+        val categoryKey = detectCategoryKeyFromQuery(q)
+        val liveData = generalMap.getOrPut(categoryKey) { MutableLiveData(emptyList()) }
 
-    viewModelScope.launch {
-        _isGeneralLoading.value = true
-        try {
-            val saved = repository.searchAndSave(q, categoryKey)
-            liveData.value = saved
+        viewModelScope.launch {
+            _isGeneralLoading.value = true
+            try {
+                val saved = repository.searchAndSave(q, categoryKey)
+                liveData.value = saved
 
-            loadedSearchQueries.add(q)
-            _generalError.value = null
-        } catch (e: Exception) {
-            _generalError.value = e.message
-        } finally {
-            _isGeneralLoading.value = false
+                loadedSearchQueries.add(q)
+                _generalError.value = null
+            } catch (e: Exception) {
+                _generalError.value = e.message
+            } finally {
+                _isGeneralLoading.value = false
+            }
         }
     }
-}
 
     fun clearLoadedCaches() {
         loadedSearchQueries.clear()
         loadedCategories.clear()
         loadedTrending.clear()
+    }
+
+    val favoriteCourses: LiveData<List<CourseEntity>> = dao.getFavoriteCourses()
+    val watchLaterCourses: LiveData<List<CourseEntity>> = dao.getWatchLaterCourses()
+    val doneCourses: LiveData<List<CourseEntity>> = dao.getDoneCourses()
+
+    fun toggleFavorite(courseId: String, value: Boolean) {
+        viewModelScope.launch {
+            val currentCourse = dao.getCourseByIdDirect(courseId)
+
+            dao.setFavorite(courseId, value)
+            loadCourse(courseId)
+            if (currentCourse == null) {
+            }
+        }
+    }
+
+    fun toggleWatchLater(courseId: String, value: Boolean) {
+        viewModelScope.launch {
+            val currentCourse = dao.getCourseByIdDirect(courseId)
+            dao.setWatchLater(courseId, value)
+            loadCourse(courseId)
+
+            if (currentCourse == null) {
+            }
+        }
+    }
+    fun toggleDone(courseId: String, value: Boolean) {
+        viewModelScope.launch {
+            dao.setDone(courseId, value)
+            loadCourse(courseId)
+        }
+    }
+
+    //  التحقق من حالة الكورس
+    suspend fun getCourseState(courseId: String): Pair<Boolean, Boolean> {
+        val course = dao.getCourseByIdDirect(courseId)
+        return Pair(course?.isFavorite ?: false, course?.isWatchLater ?: false)
     }
 }

@@ -7,5 +7,7 @@ data class User(
     val phone: String = "",
     val imageUrl: String = "",
     val watchlist: List<String> = emptyList(),
-    val favorites: List<String> = emptyList()
+    val favorites: List<String> = emptyList(),
+    val doneCourses: List<String> = emptyList()
+
 )

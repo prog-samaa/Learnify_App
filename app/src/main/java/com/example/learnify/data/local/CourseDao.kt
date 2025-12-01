@@ -16,6 +16,10 @@ interface CourseDao {
     @Query("SELECT * FROM course_table WHERE id = :courseId LIMIT 1")
     fun getCourseById(courseId: String): LiveData<CourseEntity>
 
+    @Query("SELECT * FROM course_table WHERE id IN (:ids)")
+    fun getCoursesByIds(ids: List<String>): LiveData<List<CourseEntity>>
+
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCourses(courses: List<CourseEntity>)
     // Inserts a list of courses into the database.
@@ -55,4 +59,28 @@ interface CourseDao {
     suspend fun clearCoursesForCategory(category: String)
     // Deletes all non-trending courses for the given category.
     // Useful before inserting fresh search results for that category.
+
+    // تحديث المفضلة
+    @Query("UPDATE course_table SET isFavorite = :fav WHERE id = :courseId")
+    suspend fun setFavorite(courseId: String, fav: Boolean)
+
+    // تحديث WatchLater
+    @Query("UPDATE course_table SET isWatchLater = :watch WHERE id = :courseId")
+    suspend fun setWatchLater(courseId: String, watch: Boolean)
+// تحديث المكتملة
+    @Query("UPDATE course_table SET isDone = :done WHERE id = :courseId")
+    suspend fun setDone(courseId: String, done: Boolean)
+
+    // LiveData للكورسات المفضلة
+    @Query("SELECT * FROM course_table WHERE isFavorite = 1 ORDER BY publishedAt DESC")
+    fun getFavoriteCourses(): LiveData<List<CourseEntity>>
+
+    // LiveData للكورسات في WatchLater
+    @Query("SELECT * FROM course_table WHERE isWatchLater = 1 ORDER BY publishedAt DESC")
+    fun getWatchLaterCourses(): LiveData<List<CourseEntity>>
+
+    // LiveData للكورسات المكتملة
+    @Query("SELECT * FROM course_table WHERE isDone = 1 ORDER BY publishedAt DESC")
+    fun getDoneCourses(): LiveData<List<CourseEntity>>
+
 }

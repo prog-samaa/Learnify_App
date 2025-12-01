@@ -31,7 +31,8 @@ class UserViewModel : ViewModel() {
                     phone = data["phone"] as? String ?: "",
                     imageUrl = data["imageUrl"] as? String ?: "",
                     watchlist = data["watchlist"] as? List<String> ?: emptyList(),
-                    favorites = data["favorites"] as? List<String> ?: emptyList()
+                    favorites = data["favorites"] as? List<String> ?: emptyList(),
+                    doneCourses = data["doneCourses"] as? List<String> ?: emptyList()
                 )
                 isLoggedIn.value = true
             }
@@ -152,7 +153,125 @@ fun login(email: String, password: String) {
             } catch (e: Exception) { errorMessage.value = e.message }
         }
     }
+    // ---------- FAVORITES OPERATIONS ----------
+    fun addToFavorites(courseId: String) {
+        viewModelScope.launch {
+            try {
+                val currentFavorites = currentUser.value?.favorites ?: emptyList()
+                if (!currentFavorites.contains(courseId)) {
+                    val updatedFavorites = currentFavorites + courseId
+                    repo.updateUserInfo(updates = mapOf("favorites" to updatedFavorites))
+                }
+                repo.addToFavorites(courseId)
+            } catch (e: Exception) {
+                errorMessage.value = "Failed to add to favorites"
+            }
+        }
+    }
 
+    fun removeFromFavorites(courseId: String) {
+        viewModelScope.launch {
+            try {
+                val currentFavorites = currentUser.value?.favorites ?: emptyList()
+                val updatedFavorites = currentFavorites.filter { it != courseId }
+                repo.updateUserInfo(updates = mapOf("favorites" to updatedFavorites))
+                repo.removeFromFavorites(courseId)
+            } catch (e: Exception) {
+                errorMessage.value = "Failed to remove from favorites"
+            }
+        }
+    }
+
+    // ---------- WATCHLIST OPERATIONS ----------
+    fun addToWatchlist(courseId: String) {
+        viewModelScope.launch {
+            try {
+                val currentWatchlist = currentUser.value?.watchlist ?: emptyList()
+                if (!currentWatchlist.contains(courseId)) {
+                    val updatedWatchlist = currentWatchlist + courseId
+                    repo.updateUserInfo(updates = mapOf("watchlist" to updatedWatchlist))
+                }
+                repo.addToWatchlist(courseId)
+            } catch (e: Exception) {
+                errorMessage.value = "Failed to add to watchlist"
+            }
+        }
+    }
+
+    fun removeFromWatchlist(courseId: String) {
+        viewModelScope.launch {
+            try {
+                val currentWatchlist = currentUser.value?.watchlist ?: emptyList()
+                val updatedWatchlist = currentWatchlist.filter { it != courseId }
+                repo.updateUserInfo(updates = mapOf("watchlist" to updatedWatchlist))
+                repo.removeFromWatchlist(courseId)
+            } catch (e: Exception) {
+                errorMessage.value = "Failed to remove from watchlist"
+            }
+        }
+    }
+
+    // ---------- DONE COURSES OPERATIONS ----------
+    fun addToDoneCourses(courseId: String) {
+        viewModelScope.launch {
+            try {
+                val currentDoneCourses = currentUser.value?.doneCourses ?: emptyList()
+                if (!currentDoneCourses.contains(courseId)) {
+                    val updatedDoneCourses = currentDoneCourses + courseId
+                    repo.updateUserInfo(updates = mapOf("doneCourses" to updatedDoneCourses))
+                }
+                repo.addToDoneCourses(courseId)
+            } catch (e: Exception) {
+                errorMessage.value = "Failed to mark course as completed"
+            }
+        }
+    }
+
+    fun removeFromDoneCourses(courseId: String) {
+        viewModelScope.launch {
+            try {
+                val currentDoneCourses = currentUser.value?.doneCourses ?: emptyList()
+                val updatedDoneCourses = currentDoneCourses.filter { it != courseId }
+                repo.updateUserInfo(updates = mapOf("doneCourses" to updatedDoneCourses))
+                repo.removeFromDoneCourses(courseId)
+            } catch (e: Exception) {
+                errorMessage.value = "Failed to remove from completed courses"
+            }
+        }
+    }
+
+    // مزامنة Done Courses مع Room
+    fun syncDoneCoursesWithRoom(roomDoneCourses: List<String>) {
+        viewModelScope.launch {
+            try {
+                repo.syncDoneCoursesWithRoom(roomDoneCourses)
+            } catch (e: Exception) {
+                errorMessage.value = "Failed to sync completed courses"
+            }
+        }
+    }
+
+    // مزامنة Favorites مع Room
+    fun syncFavoritesWithRoom(roomFavorites: List<String>) {
+        viewModelScope.launch {
+            try {
+                repo.syncFavoritesWithRoom(roomFavorites)
+            } catch (e: Exception) {
+                errorMessage.value = "Failed to sync favorites"
+            }
+        }
+    }
+
+    // مزامنة Watchlist مع Room
+    fun syncWatchlistWithRoom(roomWatchlist: List<String>) {
+        viewModelScope.launch {
+            try {
+                repo.syncWatchlistWithRoom(roomWatchlist)
+            } catch (e: Exception) {
+                errorMessage.value = "Failed to sync watchlist"
+            }
+        }
+    }
     fun logout() {
         repo.logout()
         isLoggedIn.value = false

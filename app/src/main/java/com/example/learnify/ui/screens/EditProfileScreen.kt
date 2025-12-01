@@ -141,7 +141,7 @@ fun EditProfileScreen(
                 modifier = Modifier
                     .size(80.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFD9C3FF)),
+                    .background(Color(0xFF7D5260)),
                 contentAlignment = Alignment.Center
             ) {
                 if (userValue.imageUrl.isNotEmpty()) {

@@ -24,6 +24,7 @@ import com.example.learnify.viewmodel.UserViewModel
 import com.example.learnify.ui.TimerViewModel
 import com.example.learnify.ui.screens.PomodoroScreen
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 import com.example.learnify.ui.screens.ToDoScreen
 
 
@@ -44,6 +45,11 @@ class MainActivity : ComponentActivity() {
                 val userViewModel: UserViewModel = viewModel()
                 val courseViewModel: CourseViewModel = viewModel()
                 val timerViewModel: TimerViewModel = viewModel()
+
+                // إضافة LaunchedEffect لتحميل المفضلة عند بداية التطبيق
+                LaunchedEffect(Unit) {
+                    courseViewModel.initializeFavorites()
+                }
 
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
@@ -123,7 +129,8 @@ class MainActivity : ComponentActivity() {
                             courseDetailsScreen(
                                 courseId = courseId,
                                 navController = navController,
-                                viewModel = courseViewModel
+                                viewModel = courseViewModel,
+                                userViewModel = userViewModel
                             )
                         }
                     }

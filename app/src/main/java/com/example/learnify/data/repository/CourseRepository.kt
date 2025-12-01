@@ -12,7 +12,7 @@ import kotlin.math.log10
 
 class CourseRepository(private val dao: CourseDao) {
 
-    private val apiKey = "Yor API key"
+    private val apiKey = "Your api key"
 
     // Returns LiveData of trending courses for a specific category
     fun getTrendingLive(category: String): LiveData<List<CourseEntity>> =
@@ -20,9 +20,22 @@ class CourseRepository(private val dao: CourseDao) {
 
     // Save trending courses to DB for a specific category
     suspend fun saveTrending(list: List<ChannelCourse>, channelId: String) {
+        //  نجيب البيانات الحالية من الداتابيز عشان نحفظ حالة المفضلة
+        val existingCourses = dao.getCoursesList(true).associateBy { it.id }
+
         dao.clearTrendingForCategory(channelId)
         dao.insertCourses(
-            list.map { it.toEntity(isTrending = true, category = channelId) }
+            list.map { channelCourse ->
+                val existingCourse = existingCourses[channelCourse.id]
+                channelCourse.toEntity(
+                    isTrending = true,
+                    category = channelId,
+                    isFavorite = existingCourse?.isFavorite ?: false, // نحفظ الحالة القديمة
+                    isWatchLater = existingCourse?.isWatchLater ?: false , // نحفظ الحالة القديمة
+                    isDone = existingCourse?.isDone ?: false
+
+                )
+            }
         )
     }
 
@@ -42,16 +55,29 @@ class CourseRepository(private val dao: CourseDao) {
                 playlist.copy(rating = calculateRatingForPlaylist(playlist.playlistId.playlistId))
             }
 
-            val entities = courses.map { it.toEntity(false, category = categoryKey) }
+            //  نحفظ حالة المفضلة والواتش ليتير و المكتملة
+            val existingCourses = dao.getCoursesList(false).associateBy { it.id }
 
-            dao.clearCoursesForCategory(categoryKey) // replace existing for category
+            val entities = courses.map { searchCourse ->
+                val existingCourse = existingCourses[searchCourse.playlistId.playlistId]
+                searchCourse.toEntity(
+                    isTrending = false,
+                    category = categoryKey,
+                    isFavorite = existingCourse?.isFavorite ?: false, // نحفظ الحالة القديمة
+                    isWatchLater = existingCourse?.isWatchLater ?: false, // نحفظ الحالة القديمة
+                    isDone = existingCourse?.isDone ?: false
+
+                )
+            }
+
+            dao.clearCoursesForCategory(categoryKey)
             dao.insertCourses(entities)
 
             entities
         } catch (e: Exception) {
             // Fallback to DB if API fails
             dao.getCoursesListByCategory(categoryKey).ifEmpty {
-                dao.getCoursesList(false) // general fallback
+                dao.getCoursesList(false)
             }
         }
     }
@@ -81,9 +107,28 @@ class CourseRepository(private val dao: CourseDao) {
         }
     }
 
-
+    //  إدخال أو تحديث كورس مع الحفاظ على الحالة
+    suspend fun insertOrUpdateCourse(course: CourseEntity) {
+        val existingCourse = dao.getCourseByIdDirect(course.id)
+        if (existingCourse != null) {
+            // إذا الكورس موجود، نحدثه مع الحفاظ على حالة المفضلة والواتش ليتير و المكتملة
+            val updatedCourse = course.copy(
+                isFavorite = existingCourse.isFavorite,
+                isWatchLater = existingCourse.isWatchLater,
+                isDone = existingCourse.isDone
+            )
+            dao.insertCourses(listOf(updatedCourse))
+        } else {
+            // إذا الكورس جديد، نضيفه
+            dao.insertCourses(listOf(course))
+        }
+    }
 
     fun getCourseById(id: String): LiveData<CourseEntity> = dao.getCourseById(id)
+
+    suspend fun getCourseByIdDirect(id: String): CourseEntity? {
+        return dao.getCourseByIdDirect(id)
+    }
 
     // Calculate a rating for a playlist based on views and likes
     private suspend fun calculateRatingForPlaylist(playlistId: String): Float? {
@@ -117,10 +162,28 @@ class CourseRepository(private val dao: CourseDao) {
             null
         }
     }
+
+    suspend fun toggleFavorite(courseId: String, value: Boolean) {
+        dao.setFavorite(courseId, value)
+    }
+
+    suspend fun toggleWatchLater(courseId: String, value: Boolean) {
+        dao.setWatchLater(courseId, value)
+    }
+    suspend fun toggleDone(courseId: String, value: Boolean) {
+        dao.setDone(courseId, value)
+    }
+
 }
 
 // Extensions to convert SearchCourse/ChannelCourse -> CourseEntity with category
-fun SearchCourse.toEntity(isTrending: Boolean, category: String): CourseEntity =
+fun SearchCourse.toEntity(
+    isTrending: Boolean,
+    category: String,
+    isFavorite: Boolean = false,
+    isWatchLater: Boolean = false,
+    isDone: Boolean = false // أضف هذا
+): CourseEntity =
     CourseEntity(
         id = this.playlistId.playlistId,
         title = this.details.courseTitle,
@@ -130,10 +193,19 @@ fun SearchCourse.toEntity(isTrending: Boolean, category: String): CourseEntity =
         imageUrl = this.details.imageUrl.thumbnail.url,
         rating = this.rating,
         isTrending = isTrending,
-        category = category
+        category = category,
+        isFavorite = isFavorite,
+        isWatchLater = isWatchLater,
+        isDone = isDone
     )
 
-fun ChannelCourse.toEntity(isTrending: Boolean, category: String): CourseEntity =
+fun ChannelCourse.toEntity(
+    isTrending: Boolean,
+    category: String,
+    isFavorite: Boolean = false,
+    isWatchLater: Boolean = false,
+    isDone: Boolean = false
+): CourseEntity =
     CourseEntity(
         id = this.id,
         title = this.details.courseTitle,
@@ -143,7 +215,10 @@ fun ChannelCourse.toEntity(isTrending: Boolean, category: String): CourseEntity 
         imageUrl = this.details.imageUrl.thumbnail.url,
         rating = this.rating,
         isTrending = isTrending,
-        category = category
+        category = category,
+        isFavorite = isFavorite,
+        isWatchLater = isWatchLater,
+        isDone = isDone
     )
 
 // Converters back (if needed)
