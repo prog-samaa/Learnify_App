@@ -1,11 +1,13 @@
 package com.example.learnify
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -19,21 +21,30 @@ import com.example.learnify.ui.CourseViewModel
 import com.example.learnify.ui.components.BottomNavigation
 import com.example.learnify.ui.theme.AppBackgroundColor
 import com.example.learnify.viewmodel.UserViewModel
+import com.example.learnify.ui.TimerViewModel
+import com.example.learnify.ui.screens.PomodoroScreen
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import com.example.learnify.ui.screens.ToDoScreen
+
 
 class MainActivity : ComponentActivity() {
+
+    @SuppressLint("ViewModelConstructorInComposable")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         setContent {
             LearnifyTheme {
+
                 val navController = rememberNavController()
                 var selected by remember { mutableStateOf<String?>(null) }
 
+                // ViewModels
                 val userViewModel: UserViewModel = viewModel()
                 val courseViewModel: CourseViewModel = viewModel()
+                val timerViewModel: TimerViewModel = viewModel()
 
                 // إضافة LaunchedEffect لتحميل المفضلة عند بداية التطبيق
                 LaunchedEffect(Unit) {
@@ -43,15 +54,20 @@ class MainActivity : ComponentActivity() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
                 val currentUser = FirebaseAuth.getInstance().currentUser
+
                 val showBottomBar = currentUser != null &&
-                        currentRoute !in listOf("login", "signup", "forgot", "courseDetails/{courseId}", "edit_profile")
+                        currentRoute !in listOf(
+                    "login",
+                    "signup",
+                    "forgot",
+                    "courseDetails/{courseId}",
+                    "edit_profile"
+                )
 
                 Scaffold(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(AppBackgroundColor)
-                        .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
-
+                        .background(AppBackgroundColor),
                     bottomBar = {
                         if (showBottomBar) {
                             BottomNavigation(
@@ -61,6 +77,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { innerPadding ->
+
                     NavHost(
                         navController = navController,
                         startDestination = if (currentUser == null) "login" else "home",
@@ -70,6 +87,7 @@ class MainActivity : ComponentActivity() {
                         composable("login") { LoginScreen(navController, userViewModel) }
                         composable("signup") { SignUpScreen(navController, userViewModel) }
                         composable("forgot") { ForgotPasswordScreen(navController, userViewModel) }
+
                         composable("home") {
                             HomeScreen(
                                 selected = selected,
@@ -78,8 +96,18 @@ class MainActivity : ComponentActivity() {
                                 navController = navController
                             )
                         }
-                        composable("pomodoro") { PomodoroScreen() }
-                        composable("todo") { ToDoScreen() }
+
+                        composable("pomodoro") {
+                            PomodoroScreen(
+                                navController = navController,
+                                viewModel = timerViewModel
+                            )
+                        }
+
+                        composable("todo") {
+                            val todoViewModel: ToDoViewModel = viewModel()
+                            ToDoScreen(todoViewModel)
+                        }
 
                         composable("you") {
                             YouScreen(
@@ -89,7 +117,10 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        composable("edit_profile") { EditProfileScreen(navController, userViewModel) }
+                        composable("edit_profile") {
+                            EditProfileScreen(navController, userViewModel)
+                        }
+
                         composable(
                             route = "courseDetails/{courseId}",
                             arguments = listOf(navArgument("courseId") { type = NavType.StringType })
