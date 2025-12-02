@@ -121,21 +121,21 @@ fun TrendingCourseCard(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-//                              Row {
-//                    val rating = course.rating ?: 4f
-//                    Log.d("CourseRating", "Course ${course.title} -> $rating")
-//
-//                    repeat(5) { index ->
-//                        val tint =
-//                            if (index < rating.toInt()) ActiveStar else unActiveStar
-//                        Icon(
-//                            imageVector = Icons.Default.Star,
-//                            contentDescription = null,
-//                            tint = tint,
-//                            modifier = Modifier.size(16.dp)
-//                        )
-//                    }
-//                }
+                             Row {
+                   val rating = course.rating ?: 4f
+                   Log.d("CourseRating", "Course ${course.title} -> $rating")
+
+                   repeat(5) { index ->
+                       val tint =
+                           if (index < rating.toInt()) ActiveStar else unActiveStar
+                       Icon(
+                           imageVector = Icons.Default.Star,
+                           contentDescription = null,
+                           tint = tint,
+                           modifier = Modifier.size(16.dp)
+                       )
+                   }
+               }
             }
         }
     }
