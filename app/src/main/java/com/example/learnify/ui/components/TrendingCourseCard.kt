@@ -1,13 +1,14 @@
 package com.example.learnify.ui.components
 
+import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,11 +25,15 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
 import com.example.learnify.data.local.CourseEntity
+import com.example.learnify.ui.theme.ActiveStar
+import com.example.learnify.ui.theme.unActiveStar
+
 
 @Composable
 fun TrendingCourseCard(
@@ -121,21 +126,20 @@ fun TrendingCourseCard(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                             Row {
-                   val rating = course.rating ?: 4f
-                   Log.d("CourseRating", "Course ${course.title} -> $rating")
+                Row {
+                    val rating = course.rating ?: 4f
+                    Log.d("CourseRating", "Course ${course.title} -> $rating")
 
-                   repeat(5) { index ->
-                       val tint =
-                           if (index < rating.toInt()) ActiveStar else unActiveStar
-                       Icon(
-                           imageVector = Icons.Default.Star,
-                           contentDescription = null,
-                           tint = tint,
-                           modifier = Modifier.size(16.dp)
-                       )
-                   }
-               }
+                    repeat(5) { index ->
+                        val tint = if (index < rating.toInt()) ActiveStar else unActiveStar
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            tint = tint,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
             }
         }
     }

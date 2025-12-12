@@ -38,15 +38,17 @@ fun YouScreen(
     userViewModel: UserViewModel,
     courseViewModel: CourseViewModel
 ) {
-    val user = userViewModel.currentUser.value
+    val user by userViewModel.currentUser
     val errorMessage by userViewModel.errorMessage
     val favoriteCourses by courseViewModel.favoriteCourses.observeAsState(emptyList())
     val watchLaterCourses by courseViewModel.watchLaterCourses.observeAsState(emptyList())
     val doneCourses by courseViewModel.doneCourses.observeAsState(emptyList())
     val scrollState = rememberScrollState()
 
-    LaunchedEffect(Unit) {
-        courseViewModel.initializeFavorites()
+    LaunchedEffect(user?.uid) {
+        if (user != null) {
+            courseViewModel.initializeFavorites()
+        }
     }
 
     if (user == null) {
@@ -115,15 +117,16 @@ fun YouScreen(
                         .background(Color(0xFF7D5260)),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (user.imageUrl.isNotEmpty()) {
+                    if (user!!.imageUrl.isNotEmpty()) {
                         AsyncImage(
-                            model = user.imageUrl,
+                            model = user!!.imageUrl,
                             contentDescription = "Profile",
                             modifier = Modifier.fillMaxSize().clip(CircleShape)
                         )
                     } else {
                         Text(
-                            user.name.firstOrNull()?.uppercase() ?: "?",
+
+                            user!!.name.firstOrNull()?.uppercase() ?: "?",
                             color = Color.White,
                             style = MaterialTheme.typography.headlineLarge,
                             fontWeight = FontWeight.Bold
@@ -133,9 +136,9 @@ fun YouScreen(
 
                 Spacer(Modifier.height(16.dp))
 
-                Text(user.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Text(user.email, color = Color.Gray)
-                Text(user.phone, color = Color.Gray)
+                Text(user!!.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                Text(user!!.email, color = Color.Gray)
+                Text(user!!.phone, color = Color.Gray)
 
                 Spacer(Modifier.height(24.dp))
 
