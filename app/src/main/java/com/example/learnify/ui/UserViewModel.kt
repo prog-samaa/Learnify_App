@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.compose.runtime.mutableStateOf
 import com.example.learnify.data.model.User
 import com.example.learnify.data.repository.UserRepository
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 class UserViewModel : ViewModel() {
@@ -16,7 +17,14 @@ class UserViewModel : ViewModel() {
     val errorMessage = mutableStateOf<String?>(null)
     val currentUser = mutableStateOf<User?>(null)
 
-    init { observeCurrentUser() }
+    init {
+        FirebaseAuth.getInstance().addAuthStateListener { auth ->
+            val user = auth.currentUser
+            if (user != null) {
+                observeCurrentUser()
+            }
+        }
+    }
 
     private fun observeCurrentUser() {
         val firebaseUser = repo.getCurrentUser() ?: return
@@ -57,7 +65,6 @@ class UserViewModel : ViewModel() {
             try {
                 val success = repo.loginUser(email, password)
                 isLoggedIn.value = success
-                if (success) observeCurrentUser()
             } catch (e: Exception) {
                 errorMessage.value = e.message ?: "Login failed"
             }
