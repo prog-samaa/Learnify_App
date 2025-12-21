@@ -12,7 +12,7 @@ import kotlin.math.log10
 
 class CourseRepository(private val dao: CourseDao) {
 
-    private val apiKey = "AIzaSyD_Nntb2yllML53TAqll67lTzZaJNKFe3w"
+    private val apiKey = "API KEY"
 
     fun getTrendingLive(category: String): LiveData<List<CourseEntity>> =
         dao.getTrendingByCategory(category)
