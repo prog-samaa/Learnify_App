@@ -51,24 +51,30 @@ fun CourseDetailsScreen(
     }
 
     if (currentCourse == null) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.internet_error_icon),
-                contentDescription = "No Tasks Image",
-                modifier = Modifier.size(220.dp)
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.internet_error_icon),
+                    contentDescription = "No Tasks Image",
+                    modifier = Modifier.size(260.dp)
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = "Error...",
-                fontSize = 20.sp,
-                color = Color.Gray,
-                fontFamily = FontFamily(Font(R.font.playwrite))
-            )
+                Text(
+                    text = "Error...",
+                    fontSize = 20.sp,
+                    color = Color.Gray,
+                    fontFamily = FontFamily(Font(R.font.playwrite))
+                )
+            }
         }
+
     } else {
         currentCourse?.let { course ->
             Column(

@@ -43,7 +43,7 @@ fun HomeScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.22f)
+                    .weight(0.2f)
             ) {
                 LearnifyHeader(
                     onSearch = { searchQuery = it }
@@ -53,7 +53,7 @@ fun HomeScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.07f)
+                    .weight(0.08f)
                     .padding(horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -62,14 +62,14 @@ fun HomeScreen(
                     style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = PrimaryColor,
-                    fontFamily = FontFamily(Font(R.font.playwrite))
+                    fontFamily = FontFamily(Font(R.font.playwrite)),
                 )
             }
 
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.28f)
+                    .weight(0.25f)
             ) {
                 CategoryButton(
                     selected = selected,
