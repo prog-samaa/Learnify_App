@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
-import com.example.learnify.ui.CourseViewModel
+import com.example.learnify.ui.viewModels.CourseViewModel
 import com.example.learnify.ui.theme.AppBackgroundColor
 import com.example.learnify.ui.theme.PrimaryColor
 import com.example.learnify.viewmodel.UserViewModel
@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.layout.ContentScale
 
 @Composable
-fun courseDetailsScreen(
+fun CourseDetailsScreen(
     courseId: String?,
     navController: NavHostController,
     viewModel: CourseViewModel = viewModel(),

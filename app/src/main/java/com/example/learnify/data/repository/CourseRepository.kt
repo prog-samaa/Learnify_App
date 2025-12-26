@@ -12,7 +12,7 @@ import kotlin.math.log10
 
 class CourseRepository(private val dao: CourseDao) {
 
-    private val apiKey = "API KEY"
+    private val apiKey = ""
 
     fun getTrendingLive(category: String): LiveData<List<CourseEntity>> =
         dao.getTrendingByCategory(category)
@@ -34,9 +34,6 @@ class CourseRepository(private val dao: CourseDao) {
             }
         )
     }
-
-    suspend fun loadTrendingFromDB(): List<ChannelCourse> =
-        dao.getCoursesList(true).map { it.toChannelCourse() }
 
     suspend fun searchAndSave(query: String, categoryKey: String): List<CourseEntity> {
         return try {
@@ -95,25 +92,6 @@ class CourseRepository(private val dao: CourseDao) {
         }
     }
 
-    suspend fun insertOrUpdateCourse(course: CourseEntity) {
-        val existingCourse = dao.getCourseByIdDirect(course.id)
-        if (existingCourse != null) {
-            val updatedCourse = course.copy(
-                isFavorite = existingCourse.isFavorite,
-                isWatchLater = existingCourse.isWatchLater,
-                isDone = existingCourse.isDone
-            )
-            dao.insertCourses(listOf(updatedCourse))
-        } else {
-            dao.insertCourses(listOf(course))
-        }
-    }
-
-    fun getCourseById(id: String): LiveData<CourseEntity> = dao.getCourseById(id)
-
-    suspend fun getCourseByIdDirect(id: String): CourseEntity? =
-        dao.getCourseByIdDirect(id)
-
     private suspend fun calculateRatingForPlaylist(playlistId: String): Float? {
         return try {
             val playlistItems = RetrofitInstance.api.getPlaylistItems(
@@ -145,10 +123,6 @@ class CourseRepository(private val dao: CourseDao) {
             null
         }
     }
-
-    suspend fun toggleFavorite(courseId: String, value: Boolean) = dao.setFavorite(courseId, value)
-    suspend fun toggleWatchLater(courseId: String, value: Boolean) = dao.setWatchLater(courseId, value)
-    suspend fun toggleDone(courseId: String, value: Boolean) = dao.setDone(courseId, value)
 }
 
 fun SearchCourse.toEntity(
@@ -194,31 +168,3 @@ fun ChannelCourse.toEntity(
         isWatchLater = isWatchLater,
         isDone = isDone
     )
-
-fun CourseEntity.toSearchCourse() = com.example.learnify.data.model.SearchCourse(
-    details = com.example.learnify.data.model.PlaylistSnippet(
-        courseTitle = this.title,
-        courseDescription = this.description,
-        channelTitle = this.channelTitle,
-        publishTime = this.publishedAt,
-        imageUrl = com.example.learnify.data.model.PlaylistThumbnails(
-            thumbnail = com.example.learnify.data.model.ThumbnailDetail(this.imageUrl)
-        )
-    ),
-    playlistId = com.example.learnify.data.model.PlaylistId(this.id),
-    rating = this.rating
-)
-
-fun CourseEntity.toChannelCourse() = com.example.learnify.data.model.ChannelCourse(
-    details = com.example.learnify.data.model.PlaylistSnippet(
-        courseTitle = this.title,
-        courseDescription = this.description,
-        channelTitle = this.channelTitle,
-        publishTime = this.publishedAt,
-        imageUrl = com.example.learnify.data.model.PlaylistThumbnails(
-            thumbnail = com.example.learnify.data.model.ThumbnailDetail(this.imageUrl)
-        )
-    ),
-    id = this.id,
-    rating = this.rating
-)

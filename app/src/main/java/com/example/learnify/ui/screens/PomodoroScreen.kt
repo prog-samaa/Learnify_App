@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.learnify.R
-import com.example.learnify.ui.PomodoroViewModel
+import com.example.learnify.ui.viewModels.PomodoroViewModel
 import com.example.learnify.ui.theme.Light_Brown
 import com.example.learnify.ui.theme.PrimaryColor
 

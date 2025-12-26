@@ -1,7 +1,10 @@
-package com.example.learnify.ui
+package com.example.learnify.ui.viewModels
 
 import android.app.Application
-import androidx.lifecycle.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import com.example.learnify.data.local.CourseDatabase
 import com.example.learnify.data.local.CourseEntity
 import com.example.learnify.data.repository.CourseRepository
@@ -67,21 +70,6 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
     private val loadedSearchQueries = mutableSetOf<String>()
     private val loadedCategories = mutableSetOf<String>()
     private val loadedTrending = mutableSetOf<String>()
-
-    fun getCoursesByIds(ids: List<String>): LiveData<List<CourseEntity>> {
-        val result = MutableLiveData<List<CourseEntity>>()
-        viewModelScope.launch {
-            val list = ids.mapNotNull { id ->
-                dao.getCourseByIdDirect(id)
-            }
-            result.postValue(list)
-        }
-        return result
-    }
-
-    fun getCourseById(id: String): LiveData<CourseEntity> {
-        return repository.getCourseById(id)
-    }
 
     fun detectCategoryKeyFromQuery(query: String): String {
         val q = query.lowercase()
@@ -164,51 +152,6 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun refreshTrending(category: String) {
-        val id = category.trim()
-        if (id.isEmpty()) return
-        viewModelScope.launch {
-            _isTrendingLoading.value = true
-            try {
-                val api = repository.getTrendingFromAPI(id)
-                if (api.isNotEmpty()) repository.saveTrending(api, id)
-                _trendingError.value = null
-            } catch (e: Exception) {
-                _trendingError.value = e.message
-            } finally {
-                _isTrendingLoading.value = false
-            }
-        }
-    }
-
-    fun refreshSearch(query: String) {
-        val q = query.trim()
-        if (q.isEmpty()) return
-
-        val categoryKey = detectCategoryKeyFromQuery(q)
-        val liveData = generalMap.getOrPut(categoryKey) { MutableLiveData(emptyList()) }
-
-        viewModelScope.launch {
-            _isGeneralLoading.value = true
-            try {
-                val saved = repository.searchAndSave(q, categoryKey)
-                liveData.value = saved
-                loadedSearchQueries.add(q)
-                _generalError.value = null
-            } catch (e: Exception) {
-                _generalError.value = e.message
-            } finally {
-                _isGeneralLoading.value = false
-            }
-        }
-    }
-
-    fun clearLoadedCaches() {
-        loadedSearchQueries.clear()
-        loadedCategories.clear()
-        loadedTrending.clear()
-    }
-
     val favoriteCourses: LiveData<List<CourseEntity>> = dao.getFavoriteCourses()
     val watchLaterCourses: LiveData<List<CourseEntity>> = dao.getWatchLaterCourses()
     val doneCourses: LiveData<List<CourseEntity>> = dao.getDoneCourses()
@@ -236,10 +179,5 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
             dao.setDone(courseId, value)
             loadCourse(courseId)
         }
-    }
-
-    suspend fun getCourseState(courseId: String): Pair<Boolean, Boolean> {
-        val course = dao.getCourseByIdDirect(courseId)
-        return Pair(course?.isFavorite ?: false, course?.isWatchLater ?: false)
     }
 }

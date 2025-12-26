@@ -28,11 +28,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.learnify.data.local.CourseEntity
-import com.example.learnify.viewmodel.UserViewModel
-import com.example.learnify.ui.CourseViewModel
 import com.example.learnify.ui.components.CourseCard
 import com.example.learnify.ui.theme.AppBackgroundColor
+import com.example.learnify.ui.theme.Green
 import com.example.learnify.ui.theme.PrimaryColor
+import com.example.learnify.ui.viewModels.CourseViewModel
+import com.example.learnify.viewmodel.UserViewModel
 
 @Composable
 fun YouScreen(
@@ -354,7 +355,6 @@ fun ProfileStatsSection(
                     label = "Favorites",
                     color = Color(0xFFFF6B6B)
                 )
-
                 StatItem(
                     count = watchLaterCount,
                     label = "Watch Later",
@@ -363,7 +363,7 @@ fun ProfileStatsSection(
                 StatItem(
                     count = doneCount,
                     label = "Completed",
-                    color = Color(0xFF4CAF50)
+                    color = Green
                 )
                 StatItem(
                     count = favoriteCount + watchLaterCount + doneCount,

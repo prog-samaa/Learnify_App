@@ -7,15 +7,15 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.learnify.R
-import com.example.learnify.ui.CourseViewModel
+import com.example.learnify.ui.viewModels.CourseViewModel
 
 @Composable
 fun CourseGridScreen(
@@ -50,7 +50,6 @@ fun CourseGridScreen(
 
     when {
         isLoading -> Loading()
-
         error != null -> Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -63,7 +62,6 @@ fun CourseGridScreen(
                 modifier = Modifier.size(100.dp)
             )
         }
-
         courses.isEmpty() -> Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -76,7 +74,6 @@ fun CourseGridScreen(
                 modifier = Modifier.size(100.dp)
             )
         }
-
         else -> {
             val rows = (courses.size + 1) / 2
             val gridHeight = (cardHeight * rows) + (16.dp.value * (rows - 1))

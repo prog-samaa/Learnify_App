@@ -39,7 +39,7 @@ fun BottomNavigation(
     navController: NavController,
     onHomeClicked: () -> Unit,
     modifier: Modifier = Modifier,
-    items: List<BottomNavItem> = defaultBottomItems()
+    items: List<BottomNavItem> = DefaultBottomItems()
 ) {
     Surface(
         color = BarBackground,

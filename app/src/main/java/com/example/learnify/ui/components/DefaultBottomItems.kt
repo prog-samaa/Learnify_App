@@ -7,7 +7,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Timer
 import com.example.learnify.data.model.BottomNavItem
 
-fun defaultBottomItems(): List<BottomNavItem> = listOf(
+fun DefaultBottomItems(): List<BottomNavItem> = listOf(
     BottomNavItem(route = "home", title = "Home", icon = Icons.Default.Home),
     BottomNavItem(route = "pomodoro", title = "Pomodoro", icon = Icons.Default.Timer),
     BottomNavItem(route = "todo", title = "To Do", icon = Icons.Default.Checklist),

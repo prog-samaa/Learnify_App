@@ -12,12 +12,6 @@ interface CourseDao {
     @Query("SELECT * FROM course_table WHERE id = :id LIMIT 1")
     suspend fun getCourseByIdDirect(id: String): CourseEntity?
 
-    @Query("SELECT * FROM course_table WHERE id = :courseId LIMIT 1")
-    fun getCourseById(courseId: String): LiveData<CourseEntity>
-
-    @Query("SELECT * FROM course_table WHERE id IN (:ids)")
-    fun getCoursesByIds(ids: List<String>): LiveData<List<CourseEntity>>
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCourses(courses: List<CourseEntity>)
 

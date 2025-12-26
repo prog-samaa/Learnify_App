@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.compose.runtime.mutableStateOf
 import com.example.learnify.data.model.User
 import com.example.learnify.data.repository.UserRepository
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 class UserViewModel : ViewModel() {
@@ -17,19 +16,9 @@ class UserViewModel : ViewModel() {
     val errorMessage = mutableStateOf<String?>(null)
     val currentUser = mutableStateOf<User?>(null)
 
-    init {
-        FirebaseAuth.getInstance().addAuthStateListener { auth ->
-            val user = auth.currentUser
-            if (user != null) {
-                observeCurrentUser()
-            }
-        }
-    }
-
     private fun observeCurrentUser() {
         val firebaseUser = repo.getCurrentUser() ?: return
         val uid = firebaseUser.uid
-
         repo.listenToUserRealtime(uid) { data ->
             if (data != null) {
                 currentUser.value = User(
@@ -50,11 +39,17 @@ class UserViewModel : ViewModel() {
     fun register(name: String, email: String, phone: String, password: String) {
         viewModelScope.launch {
             try {
+                errorMessage.value = null
                 repo.registerUser(name, email, phone, password)
                 isSuccess.value = true
-                isLoggedIn.value = true
             } catch (e: Exception) {
-                errorMessage.value = e.message ?: "Registration failed"
+                errorMessage.value = when {
+                    e.message?.contains("email address is already in use") == true ->
+                        "This email is already registered"
+                    e.message?.contains("network") == true ->
+                        "Network error. Check your connection"
+                    else -> e.message ?: "Registration failed"
+                }
                 isSuccess.value = false
             }
         }
@@ -63,29 +58,29 @@ class UserViewModel : ViewModel() {
     fun login(email: String, password: String) {
         viewModelScope.launch {
             try {
-                val success = repo.loginUser(email, password)
-                isLoggedIn.value = success
+                errorMessage.value = null
+                repo.loginUser(email, password)
+                observeCurrentUser()
+                isLoggedIn.value = true
             } catch (e: Exception) {
-                errorMessage.value = e.message ?: "Login failed"
+                errorMessage.value = "Email or password is incorrect"
+                isLoggedIn.value = false
             }
         }
     }
 
-    fun resetPassword(email: String) { repo.resetPassword(email) }
+    fun resetPassword(email: String) = repo.resetPassword(email)
 
     suspend fun verifyCurrentPassword(currentPassword: String): Boolean {
-        return try {
-            repo.verifyPassword(currentPassword)
-        } catch (e: Exception) {
-            false
-        }
+        return try { repo.verifyPassword(currentPassword) }
+        catch (e: Exception) { false }
     }
 
     fun validateNewPassword(password: String): ValidationResult {
         return when {
-            password.length < 6 -> ValidationResult(false, "Password must be at least 6 characters long")
+            password.length < 8 -> ValidationResult(false, "Password must be at least 8 characters long")
+            !password.any { it.isUpperCase() } -> ValidationResult(false, "Password must contain at least one uppercase letter")
             !password.any { it.isDigit() } -> ValidationResult(false, "Password must contain at least one number")
-            !password.any { it.isLetter() } -> ValidationResult(false, "Password must contain at least one letter")
             !password.any { !it.isLetterOrDigit() } -> ValidationResult(false, "Password must contain at least one special character")
             else -> ValidationResult(true, "Password is valid")
         }
@@ -95,11 +90,11 @@ class UserViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val ok = repo.verifyPassword(currentPassword)
-                if (!ok) {
-                    errorMessage.value = "Wrong current password"
-                    return@launch
-                }
+                if (!ok) { errorMessage.value = "Wrong current password"; return@launch }
+                val validation = validateNewPassword(newPassword)
+                if (!validation.isValid) { errorMessage.value = validation.message; return@launch }
                 repo.updateUserPassword(newPassword)
+                errorMessage.value = null
             } catch (e: Exception) { errorMessage.value = e.message }
         }
     }
@@ -226,6 +221,7 @@ class UserViewModel : ViewModel() {
         repo.logout()
         isLoggedIn.value = false
         currentUser.value = null
+        errorMessage.value = null
     }
 }
 

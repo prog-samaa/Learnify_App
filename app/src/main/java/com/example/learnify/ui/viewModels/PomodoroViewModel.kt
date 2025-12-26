@@ -1,13 +1,13 @@
-package com.example.learnify.ui
+package com.example.learnify.ui.viewModels
 
 import android.content.Context
 import android.media.MediaPlayer
-import com.example.learnify.R
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.learnify.R
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
