@@ -16,15 +16,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.learnify.ui.theme.Green
 import com.example.learnify.ui.theme.PrimaryColor
 import com.example.learnify.viewmodel.UserViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun LoginScreen(navController: NavController, viewModel: UserViewModel) {
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -43,7 +46,7 @@ fun LoginScreen(navController: NavController, viewModel: UserViewModel) {
         if (loggedIn) {
             showSuccessMessage = true
             Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT).show()
-            kotlinx.coroutines.delay(500)
+            delay(500)
             navController.navigate("home") {
                 popUpTo("login") { inclusive = true }
             }
@@ -77,10 +80,12 @@ fun LoginScreen(navController: NavController, viewModel: UserViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp)
-            .padding(top = 130.dp),
+            .padding(horizontal = 30.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
+        Spacer(modifier = Modifier.weight(1f))
+
         Text(
             text = "Log in",
             fontSize = 45.sp,
@@ -91,14 +96,14 @@ fun LoginScreen(navController: NavController, viewModel: UserViewModel) {
         Spacer(modifier = Modifier.height(10.dp))
 
         Text(
-            text = "Enter your email and password\nAccess your account securely.",
+            text = "Enter your email and password, Access your account securely.",
             fontSize = 14.sp,
             color = Color.Gray,
             lineHeight = 18.sp,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+            textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.weight(0.2f))
 
         OutlinedTextField(
             value = email,
@@ -108,17 +113,20 @@ fun LoginScreen(navController: NavController, viewModel: UserViewModel) {
                 if (emailError.isNotEmpty()) validateEmail(it)
             },
             placeholder = { Text("Email address") },
-            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = Color.Gray) },
+            leadingIcon = { Icon(Icons.Default.Email, null, tint = Color.Gray) },
             shape = RoundedCornerShape(50),
             isError = emailError.isNotEmpty(),
-            modifier = Modifier.fillMaxWidth().height(55.dp)
+            modifier = Modifier.fillMaxWidth().height(65.dp)
         )
+
         if (emailError.isNotEmpty()) {
             Text(
                 text = emailError,
                 color = Color.Red,
                 fontSize = 12.sp,
-                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, top = 4.dp)
             )
         }
 
@@ -132,12 +140,12 @@ fun LoginScreen(navController: NavController, viewModel: UserViewModel) {
             },
             singleLine = true,
             placeholder = { Text("Password") },
-            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = Color.Gray) },
+            leadingIcon = { Icon(Icons.Default.Lock, null, tint = Color.Gray) },
             trailingIcon = {
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
                     Icon(
                         if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                        contentDescription = null,
+                        null,
                         tint = Color.Gray
                     )
                 }
@@ -145,21 +153,24 @@ fun LoginScreen(navController: NavController, viewModel: UserViewModel) {
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             shape = RoundedCornerShape(50),
             isError = passwordError.isNotEmpty(),
-            modifier = Modifier.fillMaxWidth().height(55.dp)
+            modifier = Modifier.fillMaxWidth().height(65.dp)
         )
+
         if (passwordError.isNotEmpty()) {
             Text(
                 text = passwordError,
                 color = Color.Red,
                 fontSize = 12.sp,
-                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, top = 4.dp)
             )
         }
 
         Spacer(modifier = Modifier.height(15.dp))
 
         Text(
-            "Forgot Password?",
+            text = "Forgot Password?",
             color = PrimaryColor,
             fontSize = 13.sp,
             modifier = Modifier
@@ -167,7 +178,7 @@ fun LoginScreen(navController: NavController, viewModel: UserViewModel) {
                 .align(Alignment.CenterHorizontally)
         )
 
-        Spacer(modifier = Modifier.height(25.dp))
+        Spacer(modifier = Modifier.weight(0.1f))
 
         Button(
             onClick = {
@@ -188,10 +199,7 @@ fun LoginScreen(navController: NavController, viewModel: UserViewModel) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Row(
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(text = "Don't have an account? ", fontSize = 13.sp)
             Text(
                 text = "Sign Up here",
@@ -201,24 +209,25 @@ fun LoginScreen(navController: NavController, viewModel: UserViewModel) {
             )
         }
 
-        Spacer(modifier = Modifier.height(15.dp))
-
         if (showSuccessMessage) {
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Login successful!",
                 color = Green,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium
             )
-            Spacer(modifier = Modifier.height(8.dp))
         }
 
         viewModel.errorMessage.value?.let {
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = it,
                 color = Color.Red,
                 fontSize = 14.sp
             )
         }
+
+        Spacer(modifier = Modifier.weight(1f))
     }
 }

@@ -7,6 +7,9 @@ import com.example.learnify.data.model.User
 import com.example.learnify.data.repository.UserRepository
 import kotlinx.coroutines.launch
 import com.example.learnify.data.repository.CourseRepository
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 
 class UserViewModel : ViewModel() {
 
@@ -68,7 +71,12 @@ class UserViewModel : ViewModel() {
                     isLoggedIn.value = false
                 }
             } catch (e: Exception) {
-                errorMessage.value = e.message ?: "Login failed"
+                errorMessage.value = when (e) {
+                    is FirebaseAuthInvalidCredentialsException,
+                    is FirebaseAuthInvalidUserException -> "Incorrect email or password !"
+                    is FirebaseNetworkException -> "Please check your internet connection"
+                    else -> e.message ?: "Login failed !"
+                }
             }
         }
     }
@@ -87,22 +95,10 @@ class UserViewModel : ViewModel() {
 
     fun validateNewPassword(password: String): ValidationResult {
         return when {
-            password.length < 6 -> ValidationResult(
-                false,
-                "Password must be at least 6 characters long"
-            )
-            !password.any { it.isDigit() } -> ValidationResult(
-                false,
-                "Password must contain at least one number"
-            )
-            !password.any { it.isLetter() } -> ValidationResult(
-                false,
-                "Password must contain at least one letter"
-            )
-            !password.any { !it.isLetterOrDigit() } -> ValidationResult(
-                false,
-                "Password must contain at least one special character"
-            )
+            password.length < 6 -> ValidationResult(false, "Password must be at least 6 characters long")
+            !password.any { it.isDigit() } -> ValidationResult(false, "Password must contain at least one number")
+            !password.any { it.isLetter() } -> ValidationResult(false, "Password must contain at least one letter")
+            !password.any { !it.isLetterOrDigit() } -> ValidationResult(false, "Password must contain at least one special character")
             else -> ValidationResult(true, "Password is valid")
         }
     }

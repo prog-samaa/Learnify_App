@@ -61,14 +61,14 @@ fun CourseDetailsScreen(
                 Image(
                     painter = painterResource(id = R.drawable.internet_error_icon),
                     contentDescription = "No Tasks Image",
-                    modifier = Modifier.size(260.dp)
+                    modifier = Modifier.size(270.dp)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
                     text = "Error...",
-                    fontSize = 20.sp,
+                    fontSize = 24.sp,
                     color = Color.Gray,
                     fontFamily = FontFamily(Font(R.font.playwrite))
                 )

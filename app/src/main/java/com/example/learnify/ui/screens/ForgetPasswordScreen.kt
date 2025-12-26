@@ -20,7 +20,10 @@ import com.example.learnify.ui.theme.PrimaryColor
 import com.example.learnify.viewmodel.UserViewModel
 
 @Composable
-fun ForgotPasswordScreen(navController: NavController, viewModel: UserViewModel) {
+fun ForgotPasswordScreen(
+    navController: NavController,
+    viewModel: UserViewModel
+) {
     val context = LocalContext.current
     var email by remember { mutableStateOf("") }
 
@@ -28,9 +31,11 @@ fun ForgotPasswordScreen(navController: NavController, viewModel: UserViewModel)
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
+        Spacer(modifier = Modifier.weight(1f))
+
         Text(
             text = "Forgot Password",
             fontSize = 34.sp,
@@ -49,18 +54,24 @@ fun ForgotPasswordScreen(navController: NavController, viewModel: UserViewModel)
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
-        Spacer(modifier = Modifier.height(35.dp))
+        Spacer(modifier = Modifier.weight(0.1f))
 
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
             singleLine = true,
             placeholder = { Text("Email address") },
-            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = Color.Gray) },
+            leadingIcon = {
+                Icon(
+                    Icons.Default.Email,
+                    contentDescription = null,
+                    tint = Color.Gray
+                )
+            },
             shape = RoundedCornerShape(50),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(55.dp)
+                .height(65.dp)
         )
 
         Spacer(modifier = Modifier.height(25.dp))
@@ -76,7 +87,11 @@ fun ForgotPasswordScreen(navController: NavController, viewModel: UserViewModel)
                     ).show()
                     navController.navigate("login")
                 } else {
-                    Toast.makeText(context, "Please enter your email", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        "Please enter your email",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             },
             modifier = Modifier
@@ -85,17 +100,23 @@ fun ForgotPasswordScreen(navController: NavController, viewModel: UserViewModel)
             shape = RoundedCornerShape(50),
             colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor)
         ) {
-            Text("Send Reset Link", fontSize = 18.sp, color = Color.White)
+            Text(
+                text = "Send Reset Link",
+                fontSize = 18.sp,
+                color = Color.White
+            )
         }
 
         Spacer(modifier = Modifier.height(15.dp))
 
         TextButton(onClick = { navController.navigate("login") }) {
             Text(
-                "Back to Login",
+                text = "Back to Login",
                 color = PrimaryColor,
                 fontSize = 14.sp
             )
         }
+
+        Spacer(modifier = Modifier.weight(1f))
     }
 }
