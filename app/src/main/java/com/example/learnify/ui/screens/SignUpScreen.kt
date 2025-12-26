@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SignUpScreen(navController: NavController, viewModel: UserViewModel) {
+
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
@@ -123,20 +124,21 @@ fun SignUpScreen(navController: NavController, viewModel: UserViewModel) {
     }
 
     fun validateAll(): Boolean {
-        val isNameValid = validateName(name)
-        val isEmailValid = validateEmail(email)
-        val isPhoneValid = validatePhone(phone)
-        val isPasswordValid = validatePassword(password)
-        return isNameValid && isEmailValid && isPhoneValid && isPasswordValid
+        return validateName(name) &&
+                validateEmail(email) &&
+                validatePhone(phone) &&
+                validatePassword(password)
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp)
-            .padding(top = 120.dp),
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
+        Spacer(modifier = Modifier.weight(1f))
+
         Text(
             text = "Create Account",
             fontSize = 34.sp,
@@ -151,11 +153,10 @@ fun SignUpScreen(navController: NavController, viewModel: UserViewModel) {
             fontSize = 12.sp,
             color = Color.Gray,
             lineHeight = 18.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+            textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(35.dp))
+        Spacer(modifier = Modifier.weight(0.3f))
 
         OutlinedTextField(
             value = name,
@@ -165,11 +166,14 @@ fun SignUpScreen(navController: NavController, viewModel: UserViewModel) {
             },
             singleLine = true,
             placeholder = { Text("Name") },
-            leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = Color.Gray) },
+            leadingIcon = { Icon(Icons.Default.Person, null, tint = Color.Gray) },
             shape = RoundedCornerShape(50),
             isError = nameError.isNotEmpty(),
-            modifier = Modifier.fillMaxWidth().height(55.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(65.dp)
         )
+
         if (nameError.isNotEmpty()) {
             Text(
                 text = nameError,
@@ -191,11 +195,14 @@ fun SignUpScreen(navController: NavController, viewModel: UserViewModel) {
             },
             singleLine = true,
             placeholder = { Text("Email address") },
-            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = Color.Gray) },
+            leadingIcon = { Icon(Icons.Default.Email, null, tint = Color.Gray) },
             shape = RoundedCornerShape(50),
             isError = emailError.isNotEmpty(),
-            modifier = Modifier.fillMaxWidth().height(55.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(65.dp)
         )
+
         if (emailError.isNotEmpty()) {
             Text(
                 text = emailError,
@@ -212,17 +219,20 @@ fun SignUpScreen(navController: NavController, viewModel: UserViewModel) {
         OutlinedTextField(
             value = phone,
             onValueChange = {
-                val digitsOnly = it.filter { char -> char.isDigit() }
-                phone = if (digitsOnly.length <= 11) digitsOnly else digitsOnly.take(11)
+                val digits = it.filter { c -> c.isDigit() }
+                phone = if (digits.length <= 11) digits else digits.take(11)
                 if (phoneError.isNotEmpty()) validatePhone(phone)
             },
             singleLine = true,
             placeholder = { Text("Phone ") },
-            leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = Color.Gray) },
+            leadingIcon = { Icon(Icons.Default.Phone, null, tint = Color.Gray) },
             shape = RoundedCornerShape(50),
             isError = phoneError.isNotEmpty(),
-            modifier = Modifier.fillMaxWidth().height(55.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(65.dp)
         )
+
         if (phoneError.isNotEmpty()) {
             Text(
                 text = phoneError,
@@ -238,18 +248,18 @@ fun SignUpScreen(navController: NavController, viewModel: UserViewModel) {
 
         OutlinedTextField(
             value = password,
-            singleLine = true,
             onValueChange = {
                 password = it
                 if (passwordError.isNotEmpty()) validatePassword(it)
             },
+            singleLine = true,
             placeholder = { Text("Password") },
-            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = Color.Gray) },
+            leadingIcon = { Icon(Icons.Default.Lock, null, tint = Color.Gray) },
             trailingIcon = {
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
                     Icon(
                         if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                        contentDescription = null,
+                        null,
                         tint = Color.Gray
                     )
                 }
@@ -257,8 +267,11 @@ fun SignUpScreen(navController: NavController, viewModel: UserViewModel) {
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             shape = RoundedCornerShape(50),
             isError = passwordError.isNotEmpty(),
-            modifier = Modifier.fillMaxWidth().height(55.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(65.dp)
         )
+
         if (passwordError.isNotEmpty()) {
             Text(
                 text = passwordError,
@@ -270,7 +283,7 @@ fun SignUpScreen(navController: NavController, viewModel: UserViewModel) {
             )
         }
 
-        Spacer(modifier = Modifier.height(25.dp))
+        Spacer(modifier = Modifier.weight(0.5f))
 
         val coroutineScope = rememberCoroutineScope()
 
@@ -278,39 +291,29 @@ fun SignUpScreen(navController: NavController, viewModel: UserViewModel) {
             onClick = {
                 if (validateAll()) {
                     coroutineScope.launch {
-                        try {
-                            viewModel.register(name, email, phone, password)
-                            Toast.makeText(context, "Account created successfully!", Toast.LENGTH_SHORT).show()
-                            showSuccessMessage = true
-
-                            kotlinx.coroutines.delay(1000)
-                            navController.navigate("login") {
-                                popUpTo("signup") { inclusive = true }
-                            }
-                            showSuccessMessage = false
-
-                        } catch (e: Exception) {
-                            Toast.makeText(context, e.message ?: "Registration failed", Toast.LENGTH_SHORT).show()
+                        viewModel.register(name, email, phone, password)
+                        Toast.makeText(context, "Account created successfully!", Toast.LENGTH_SHORT).show()
+                        kotlinx.coroutines.delay(1000)
+                        navController.navigate("login") {
+                            popUpTo("signup") { inclusive = true }
                         }
                     }
                 }
             },
-            modifier = Modifier.fillMaxWidth().height(55.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(65.dp),
             shape = RoundedCornerShape(50),
             colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor),
-            interactionSource = remember { MutableInteractionSource() },
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp, pressedElevation = 6.dp)
+            interactionSource = remember { MutableInteractionSource() }
         ) {
-            Text(text = "Register", fontSize = 18.sp, color = Color.White)
+            Text("Register", fontSize = 18.sp, color = Color.White)
         }
 
         Spacer(modifier = Modifier.height(15.dp))
 
-        Row(
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = "Already have an account? ", fontSize = 14.sp)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Already have an account? ", fontSize = 14.sp)
             Text(
                 text = "Login",
                 color = PrimaryColor,
@@ -319,26 +322,6 @@ fun SignUpScreen(navController: NavController, viewModel: UserViewModel) {
             )
         }
 
-        Spacer(modifier = Modifier.height(15.dp))
-
-        if (showSuccessMessage) {
-            Text(
-                text = "Account created successfully!",
-                color = Green,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-            )
-        }
-
-        viewModel.errorMessage.value?.let {
-            Text(
-                text = it,
-                color = Color.Red,
-                fontSize = 14.sp,
-                textAlign = TextAlign.Center
-            )
-        }
+        Spacer(modifier = Modifier.weight(1f))
     }
 }
