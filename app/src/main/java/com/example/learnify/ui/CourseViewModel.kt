@@ -6,6 +6,7 @@ import com.example.learnify.data.local.CourseDatabase
 import com.example.learnify.data.local.CourseEntity
 import com.example.learnify.data.repository.CourseRepository
 import com.example.learnify.data.repository.toEntity
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,33 +16,49 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
     private val dao = CourseDatabase.getDatabase(application).courseDao()
     private val repository = CourseRepository(dao)
 
+    private fun getUid() = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
     private val _currentCourse = MutableStateFlow<CourseEntity?>(null)
     val currentCourse: StateFlow<CourseEntity?> = _currentCourse.asStateFlow()
 
+    fun initializeFavorites() {
+        viewModelScope.launch {
+            repository.getFavoriteCourses()
+            repository.getWatchLaterCourses()
+            repository.getDoneCourses()
+        }
+    }
+
+    fun syncCoursesFromFirestore(favIds: List<String>, watchIds: List<String>, doneIds: List<String>) {
+        viewModelScope.launch {
+            val allIds = (favIds + watchIds + doneIds).distinct()
+
+            allIds.forEach { id ->
+                val exists = repository.getCourseByIdDirect(id)
+
+                if (exists == null) {
+                    repository.searchAndSave(query = id, categoryKey = "synced_courses")
+                } else {
+                    val updatedCourse = exists.copy(
+                        isFavorite = favIds.contains(id),
+                        isWatchLater = watchIds.contains(id),
+                        isDone = doneIds.contains(id)
+                    )
+                    dao.insertCourses(listOf(updatedCourse))
+                }
+            }
+        }
+    }
     fun loadCourse(courseId: String) {
         viewModelScope.launch {
-            val course = dao.getCourseByIdDirect(courseId)
+            val course = repository.getCourseByIdDirect(courseId)
             _currentCourse.value = course
         }
     }
 
-    fun initializeFavorites() {
-        viewModelScope.launch {
-            favoriteCourses.value
-            watchLaterCourses.value
-            doneCourses.value
-        }
-    }
-
-    fun trendingCourses(category: String): LiveData<List<CourseEntity>> {
-        return repository.getTrendingLive(category)
-    }
-
-    private val generalMap = mutableMapOf<String, MutableLiveData<List<CourseEntity>>>()
-
-    fun generalCoursesByCategory(category: String): LiveData<List<CourseEntity>> {
-        return generalMap.getOrPut(category) { MutableLiveData(emptyList()) }
-    }
+    val favoriteCourses: LiveData<List<CourseEntity>> = repository.getFavoriteCourses()
+    val watchLaterCourses: LiveData<List<CourseEntity>> = repository.getWatchLaterCourses()
+    val doneCourses: LiveData<List<CourseEntity>> = repository.getDoneCourses()
 
     private val _searchResults = MutableLiveData<List<CourseEntity>>()
     val searchResults: LiveData<List<CourseEntity>> = _searchResults
@@ -64,37 +81,43 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
     private val _generalError = MutableLiveData<String?>(null)
     val generalError: LiveData<String?> = _generalError
 
+    private val generalMap = mutableMapOf<String, MutableLiveData<List<CourseEntity>>>()
+
+    fun generalCoursesByCategory(category: String): LiveData<List<CourseEntity>> {
+        return generalMap.getOrPut(category) { MutableLiveData(emptyList()) }
+    }
+
     private val loadedSearchQueries = mutableSetOf<String>()
     private val loadedCategories = mutableSetOf<String>()
     private val loadedTrending = mutableSetOf<String>()
-
-    fun getCoursesByIds(ids: List<String>): LiveData<List<CourseEntity>> {
-        val result = MutableLiveData<List<CourseEntity>>()
-        viewModelScope.launch {
-            val list = ids.mapNotNull { id ->
-                dao.getCourseByIdDirect(id)
-            }
-            result.postValue(list)
-        }
-        return result
-    }
 
     fun getCourseById(id: String): LiveData<CourseEntity> {
         return repository.getCourseById(id)
     }
 
-    fun detectCategoryKeyFromQuery(query: String): String {
-        val q = query.lowercase()
-        return when {
-            "program" in q -> "programming"
-            "engineer" in q -> "engineering"
-            "medical" in q || "medicine" in q -> "medical"
-            "marketing" in q -> "marketing"
-            "language" in q -> "language"
-            "human" in q || "development" in q -> "human_dev"
-            q == "courses" || q == "home" -> "home"
-            else -> q.replace("""\s+""".toRegex(), "_")
+    fun getTrendingCourses(category: String) {
+        val id = category.trim()
+        if (id.isEmpty() || loadedTrending.contains(id)) return
+
+        viewModelScope.launch {
+            _isTrendingLoading.value = true
+            try {
+                val api = repository.getTrendingFromAPI(id)
+                if (api.isNotEmpty()) {
+                    repository.saveTrending(api, id)
+                    loadedTrending.add(id)
+                }
+                _trendingError.value = null
+            } catch (e: Exception) {
+                _trendingError.value = e.message
+            } finally {
+                _isTrendingLoading.value = false
+            }
         }
+    }
+
+    fun trendingCourses(category: String): LiveData<List<CourseEntity>> {
+        return repository.getTrendingLive(category)
     }
 
     fun searchCoursesDirect(query: String) {
@@ -103,7 +126,7 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
             try {
                 val result = repository.searchDirect(query)
                 _searchResults.value = result.map {
-                    it.toEntity(isTrending = false, category = "search")
+                    it.toEntity(userId = getUid(), isTrending = false, category = "search")
                 }
             } catch (e: Exception) {
                 _searchError.value = e.message
@@ -116,7 +139,6 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
     fun searchCourses(query: String) {
         val q = query.trim()
         if (q.isEmpty()) return
-
         val categoryKey = detectCategoryKeyFromQuery(q)
         val liveData = generalMap.getOrPut(categoryKey) { MutableLiveData(emptyList()) }
 
@@ -134,7 +156,6 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
                 val saved = repository.searchAndSave(q, categoryKey)
                 liveData.value = saved
                 loadedSearchQueries.add(q)
-                loadedCategories.add(categoryKey)
                 _generalError.value = null
             } catch (e: Exception) {
                 _generalError.value = e.message
@@ -143,103 +164,39 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
             }
         }
     }
-
-    fun getTrendingCourses(category: String) {
-        val id = category.trim()
-        if (id.isEmpty()) return
-        if (loadedTrending.contains(id)) return
-
-        viewModelScope.launch {
-            _isTrendingLoading.value = true
-            try {
-                val api = repository.getTrendingFromAPI(id)
-                if (api.isNotEmpty()) repository.saveTrending(api, id)
-                loadedTrending.add(id)
-                _trendingError.value = null
-            } catch (e: Exception) {
-                _trendingError.value = e.message
-            } finally {
-                _isTrendingLoading.value = false
-            }
-        }
-    }
-
-    fun refreshTrending(category: String) {
-        val id = category.trim()
-        if (id.isEmpty()) return
-        viewModelScope.launch {
-            _isTrendingLoading.value = true
-            try {
-                val api = repository.getTrendingFromAPI(id)
-                if (api.isNotEmpty()) repository.saveTrending(api, id)
-                _trendingError.value = null
-            } catch (e: Exception) {
-                _trendingError.value = e.message
-            } finally {
-                _isTrendingLoading.value = false
-            }
-        }
-    }
-
-    fun refreshSearch(query: String) {
-        val q = query.trim()
-        if (q.isEmpty()) return
-
-        val categoryKey = detectCategoryKeyFromQuery(q)
-        val liveData = generalMap.getOrPut(categoryKey) { MutableLiveData(emptyList()) }
-
-        viewModelScope.launch {
-            _isGeneralLoading.value = true
-            try {
-                val saved = repository.searchAndSave(q, categoryKey)
-                liveData.value = saved
-                loadedSearchQueries.add(q)
-                _generalError.value = null
-            } catch (e: Exception) {
-                _generalError.value = e.message
-            } finally {
-                _isGeneralLoading.value = false
-            }
-        }
-    }
-
-    fun clearLoadedCaches() {
-        loadedSearchQueries.clear()
-        loadedCategories.clear()
-        loadedTrending.clear()
-    }
-
-    val favoriteCourses: LiveData<List<CourseEntity>> = dao.getFavoriteCourses()
-    val watchLaterCourses: LiveData<List<CourseEntity>> = dao.getWatchLaterCourses()
-    val doneCourses: LiveData<List<CourseEntity>> = dao.getDoneCourses()
 
     fun toggleFavorite(courseId: String, value: Boolean) {
         viewModelScope.launch {
-            val currentCourse = dao.getCourseByIdDirect(courseId)
-            dao.setFavorite(courseId, value)
+            repository.toggleFavorite(courseId, value)
             loadCourse(courseId)
-            if (currentCourse == null) { }
         }
     }
 
     fun toggleWatchLater(courseId: String, value: Boolean) {
         viewModelScope.launch {
-            val currentCourse = dao.getCourseByIdDirect(courseId)
-            dao.setWatchLater(courseId, value)
+            repository.toggleWatchLater(courseId, value)
             loadCourse(courseId)
-            if (currentCourse == null) { }
         }
     }
 
     fun toggleDone(courseId: String, value: Boolean) {
         viewModelScope.launch {
-            dao.setDone(courseId, value)
+            repository.toggleDone(courseId, value)
             loadCourse(courseId)
         }
     }
 
-    suspend fun getCourseState(courseId: String): Pair<Boolean, Boolean> {
-        val course = dao.getCourseByIdDirect(courseId)
-        return Pair(course?.isFavorite ?: false, course?.isWatchLater ?: false)
+    fun detectCategoryKeyFromQuery(query: String): String {
+        val q = query.lowercase()
+        return when {
+            "program" in q -> "programming"
+            "engineer" in q -> "engineering"
+            "medical" in q || "medicine" in q -> "medical"
+            "marketing" in q -> "marketing"
+            "language" in q -> "language"
+            "human" in q || "development" in q -> "human_dev"
+            q == "courses" || q == "home" -> "home"
+            else -> q.replace("""\s+""".toRegex(), "_")
+        }
     }
 }

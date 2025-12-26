@@ -9,11 +9,29 @@ import androidx.room.Query
 @Dao
 interface CourseDao {
 
-    @Query("SELECT * FROM course_table WHERE id = :id LIMIT 1")
-    suspend fun getCourseByIdDirect(id: String): CourseEntity?
+    @Query("SELECT * FROM course_table WHERE isFavorite = 1 AND userId = :userId ORDER BY publishedAt DESC")
+    fun getFavoriteCourses(userId: String): LiveData<List<CourseEntity>>
 
-    @Query("SELECT * FROM course_table WHERE id = :courseId LIMIT 1")
-    fun getCourseById(courseId: String): LiveData<CourseEntity>
+    @Query("SELECT * FROM course_table WHERE isWatchLater = 1 AND userId = :userId ORDER BY publishedAt DESC")
+    fun getWatchLaterCourses(userId: String): LiveData<List<CourseEntity>>
+
+    @Query("SELECT * FROM course_table WHERE isDone = 1 AND userId = :userId ORDER BY publishedAt DESC")
+    fun getDoneCourses(userId: String): LiveData<List<CourseEntity>>
+
+    @Query("UPDATE course_table SET isFavorite = :fav WHERE id = :courseId AND userId = :userId")
+    suspend fun setFavorite(courseId: String, userId: String, fav: Boolean)
+
+    @Query("UPDATE course_table SET isWatchLater = :watch WHERE id = :courseId AND userId = :userId")
+    suspend fun setWatchLater(courseId: String, userId: String, watch: Boolean)
+
+    @Query("UPDATE course_table SET isDone = :done WHERE id = :courseId AND userId = :userId")
+    suspend fun setDone(courseId: String, userId: String, done: Boolean)
+
+    @Query("SELECT * FROM course_table WHERE id = :id AND userId = :userId LIMIT 1")
+    suspend fun getCourseByIdDirect(id: String, userId: String): CourseEntity?
+
+    @Query("SELECT * FROM course_table WHERE id = :courseId AND userId = :userId LIMIT 1")
+    fun getCourseById(courseId: String, userId: String): LiveData<CourseEntity>
 
     @Query("SELECT * FROM course_table WHERE id IN (:ids)")
     fun getCoursesByIds(ids: List<String>): LiveData<List<CourseEntity>>
@@ -38,22 +56,4 @@ interface CourseDao {
 
     @Query("DELETE FROM course_table WHERE isTrending = 0 AND category = :category")
     suspend fun clearCoursesForCategory(category: String)
-
-    @Query("UPDATE course_table SET isFavorite = :fav WHERE id = :courseId")
-    suspend fun setFavorite(courseId: String, fav: Boolean)
-
-    @Query("UPDATE course_table SET isWatchLater = :watch WHERE id = :courseId")
-    suspend fun setWatchLater(courseId: String, watch: Boolean)
-
-    @Query("UPDATE course_table SET isDone = :done WHERE id = :courseId")
-    suspend fun setDone(courseId: String, done: Boolean)
-
-    @Query("SELECT * FROM course_table WHERE isFavorite = 1 ORDER BY publishedAt DESC")
-    fun getFavoriteCourses(): LiveData<List<CourseEntity>>
-
-    @Query("SELECT * FROM course_table WHERE isWatchLater = 1 ORDER BY publishedAt DESC")
-    fun getWatchLaterCourses(): LiveData<List<CourseEntity>>
-
-    @Query("SELECT * FROM course_table WHERE isDone = 1 ORDER BY publishedAt DESC")
-    fun getDoneCourses(): LiveData<List<CourseEntity>>
 }

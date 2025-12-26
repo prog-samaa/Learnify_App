@@ -6,6 +6,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "course_table")
 data class CourseEntity(
     @PrimaryKey val id: String,
+    val userId: String,
     val title: String,
     val description: String,
     val channelTitle: String,

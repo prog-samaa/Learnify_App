@@ -47,9 +47,13 @@ fun YouScreen(
     val doneCourses by courseViewModel.doneCourses.observeAsState(emptyList())
     val scrollState = rememberScrollState()
 
-    LaunchedEffect(user?.uid) {
-        if (user != null) {
-            courseViewModel.initializeFavorites()
+    LaunchedEffect(user) {
+        user?.let { currentUser ->
+            courseViewModel.syncCoursesFromFirestore(
+                favIds = currentUser.favorites,
+                watchIds = currentUser.watchlist,
+                doneIds = currentUser.doneCourses
+            )
         }
     }
 
