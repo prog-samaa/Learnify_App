@@ -13,7 +13,7 @@ import com.google.firebase.auth.FirebaseAuth
 
 class CourseRepository(private val dao: CourseDao) {
 
-    private val apiKey = "AIzaSyD_Nntb2yllML53TAqll67lTzZaJNKFe3w"
+    private val apiKey = "Api key"
 
     private fun getUid(): String = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
