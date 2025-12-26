@@ -61,7 +61,7 @@ fun CourseDetailsScreen(
                 Image(
                     painter = painterResource(id = R.drawable.internet_error_icon),
                     contentDescription = "No Tasks Image",
-                    modifier = Modifier.size(220.dp)
+                    modifier = Modifier.size(260.dp)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
