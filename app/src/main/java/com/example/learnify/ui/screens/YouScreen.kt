@@ -25,14 +25,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.learnify.data.local.CourseEntity
 import com.example.learnify.viewmodel.UserViewModel
-import com.example.learnify.ui.CourseViewModel
 import com.example.learnify.ui.components.CourseCard
 import com.example.learnify.ui.theme.AppBackgroundColor
 import com.example.learnify.ui.theme.PrimaryColor
+import com.example.learnify.ui.viewModels.CourseViewModel
+import com.example.learnify.ui.viewModels.ToDoViewModel
 
 @Composable
 fun YouScreen(
@@ -46,6 +48,7 @@ fun YouScreen(
     val watchLaterCourses by courseViewModel.watchLaterCourses.observeAsState(emptyList())
     val doneCourses by courseViewModel.doneCourses.observeAsState(emptyList())
     val scrollState = rememberScrollState()
+    val todoViewModel: ToDoViewModel = viewModel()
 
     LaunchedEffect(user) {
         user?.let { currentUser ->
@@ -214,13 +217,10 @@ fun YouScreen(
 
                 Spacer(Modifier.height(20.dp))
 
+                var showLogoutDialog by remember { mutableStateOf(false) }
+
                 Button(
-                    onClick = {
-                        userViewModel.logout()
-                        navController.navigate("login") {
-                            popUpTo("home") { inclusive = true }
-                        }
-                    },
+                    onClick = { showLogoutDialog = true },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
@@ -233,6 +233,37 @@ fun YouScreen(
                         color = Color.White,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
+                    )
+                }
+
+                if (showLogoutDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showLogoutDialog = false },
+                        title = { Text("Confirm Logout") },
+                        text = { Text("Logging out will delete all your tasks data. Are you sure you want to continue?") },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    todoViewModel.clearAllTasks()
+                                    userViewModel.logout()
+                                    navController.navigate("login") {
+                                        popUpTo("home") { inclusive = true }
+                                    }
+                                    showLogoutDialog = false
+                                }
+                            ) {
+                                Text(
+                                    "Yes",
+                                    color = Color.Red,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showLogoutDialog = false }) {
+                                Text("No")
+                            }
+                        }
                     )
                 }
 

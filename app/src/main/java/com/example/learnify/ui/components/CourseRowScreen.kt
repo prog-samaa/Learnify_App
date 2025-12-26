@@ -1,24 +1,20 @@
 package com.example.learnify.ui.components
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.learnify.R
-import com.example.learnify.ui.CourseViewModel
+import com.example.learnify.ui.viewModels.CourseViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -69,7 +65,6 @@ fun CourseRowScreen(
 
     when {
         isLoading -> Loading()
-
         error != null -> Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -82,7 +77,6 @@ fun CourseRowScreen(
                 modifier = Modifier.size(100.dp)
             )
         }
-
         courses.isEmpty() -> Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -95,7 +89,6 @@ fun CourseRowScreen(
                 modifier = Modifier.size(100.dp)
             )
         }
-
         else -> LazyRow(modifier = Modifier.padding(8.dp)) {
             items(courses) { course ->
                 if (isTrending) {

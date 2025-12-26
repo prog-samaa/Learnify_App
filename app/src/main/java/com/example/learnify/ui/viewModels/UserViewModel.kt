@@ -5,10 +5,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.compose.runtime.mutableStateOf
 import com.example.learnify.data.model.User
 import com.example.learnify.data.repository.UserRepository
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import com.example.learnify.data.repository.CourseRepository
-
 
 class UserViewModel : ViewModel() {
 
@@ -20,11 +18,9 @@ class UserViewModel : ViewModel() {
     val currentUser = mutableStateOf<User?>(null)
 
     init {
-        FirebaseAuth.getInstance().addAuthStateListener { auth ->
-            val user = auth.currentUser
-            if (user != null) {
-                observeCurrentUser()
-            }
+        val user = repo.getCurrentUser()
+        if (user != null) {
+            observeCurrentUser()
         }
     }
 
@@ -54,7 +50,6 @@ class UserViewModel : ViewModel() {
             try {
                 repo.registerUser(name, email, phone, password)
                 isSuccess.value = true
-                isLoggedIn.value = true
             } catch (e: Exception) {
                 errorMessage.value = e.message ?: "Registration failed"
                 isSuccess.value = false
@@ -66,7 +61,12 @@ class UserViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val success = repo.loginUser(email, password)
-                isLoggedIn.value = success
+                if (success) {
+                    observeCurrentUser()
+                    isLoggedIn.value = true
+                } else {
+                    isLoggedIn.value = false
+                }
             } catch (e: Exception) {
                 errorMessage.value = e.message ?: "Login failed"
             }
@@ -91,22 +91,18 @@ class UserViewModel : ViewModel() {
                 false,
                 "Password must be at least 6 characters long"
             )
-
             !password.any { it.isDigit() } -> ValidationResult(
                 false,
                 "Password must contain at least one number"
             )
-
             !password.any { it.isLetter() } -> ValidationResult(
                 false,
                 "Password must contain at least one letter"
             )
-
             !password.any { !it.isLetterOrDigit() } -> ValidationResult(
                 false,
                 "Password must contain at least one special character"
             )
-
             else -> ValidationResult(true, "Password is valid")
         }
     }
@@ -270,15 +266,11 @@ class UserViewModel : ViewModel() {
         }
     }
 
-
     fun logout(courseRepository: CourseRepository? = null) {
         viewModelScope.launch {
             repo.logout()
-
             isLoggedIn.value = false
             currentUser.value = null
-
-
         }
     }
 

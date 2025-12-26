@@ -3,6 +3,7 @@ package com.example.learnify.ui.screens
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -22,15 +23,20 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
-import com.example.learnify.ui.CourseViewModel
 import com.example.learnify.ui.theme.AppBackgroundColor
 import com.example.learnify.ui.theme.PrimaryColor
 import com.example.learnify.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.sp
+import com.example.learnify.R
+import com.example.learnify.ui.viewModels.CourseViewModel
 
 @Composable
-fun courseDetailsScreen(
+fun CourseDetailsScreen(
     courseId: String?,
     navController: NavHostController,
     viewModel: CourseViewModel = viewModel(),
@@ -45,18 +51,22 @@ fun courseDetailsScreen(
     }
 
     if (currentCourse == null) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(AppBackgroundColor),
-            contentAlignment = Alignment.Center
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            CircularProgressIndicator(color = PrimaryColor)
-            Spacer(modifier = Modifier.height(8.dp))
+            Image(
+                painter = painterResource(id = R.drawable.internet_error_icon),
+                contentDescription = "No Tasks Image",
+                modifier = Modifier.size(220.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Text(
-                text = "Loading course...",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                text = "Error...",
+                fontSize = 20.sp,
+                color = Color.Gray,
+                fontFamily = FontFamily(Font(R.font.playwrite))
             )
         }
     } else {

@@ -1,4 +1,4 @@
-package com.example.learnify.ui
+package com.example.learnify.ui.viewModels
 
 import android.app.Application
 import androidx.lifecycle.*
@@ -32,10 +32,8 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
     fun syncCoursesFromFirestore(favIds: List<String>, watchIds: List<String>, doneIds: List<String>) {
         viewModelScope.launch {
             val allIds = (favIds + watchIds + doneIds).distinct()
-
             allIds.forEach { id ->
                 val exists = repository.getCourseByIdDirect(id)
-
                 if (exists == null) {
                     repository.searchAndSave(query = id, categoryKey = "synced_courses")
                 } else {
@@ -49,6 +47,7 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
             }
         }
     }
+
     fun loadCourse(courseId: String) {
         viewModelScope.launch {
             val course = repository.getCourseByIdDirect(courseId)
@@ -88,7 +87,6 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     private val loadedSearchQueries = mutableSetOf<String>()
-    private val loadedCategories = mutableSetOf<String>()
     private val loadedTrending = mutableSetOf<String>()
 
     fun getCourseById(id: String): LiveData<CourseEntity> {
@@ -98,7 +96,6 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
     fun getTrendingCourses(category: String) {
         val id = category.trim()
         if (id.isEmpty() || loadedTrending.contains(id)) return
-
         viewModelScope.launch {
             _isTrendingLoading.value = true
             try {
@@ -141,7 +138,6 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
         if (q.isEmpty()) return
         val categoryKey = detectCategoryKeyFromQuery(q)
         val liveData = generalMap.getOrPut(categoryKey) { MutableLiveData(emptyList()) }
-
         if (loadedSearchQueries.contains(q)) {
             viewModelScope.launch {
                 val list = dao.getCoursesListByCategory(categoryKey)
@@ -149,7 +145,6 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
             }
             return
         }
-
         viewModelScope.launch {
             _isGeneralLoading.value = true
             try {

@@ -1,4 +1,4 @@
-package com.example.learnify.ui.screens
+package com.example.learnify.ui.viewModels
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 class ToDoViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val taskDao = TaskDatabase.getDatabase(application).taskDao()
+    private val taskDao = TaskDatabase.Companion.getDatabase(application).taskDao()
 
     private val _tasks = MutableStateFlow<List<TaskEntity>>(emptyList())
     val tasks: StateFlow<List<TaskEntity>> = _tasks

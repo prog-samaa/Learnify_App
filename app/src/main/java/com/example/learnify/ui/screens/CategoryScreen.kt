@@ -63,7 +63,7 @@ fun CategoryScreen(
 
                         Text(
                             text = CategoryName,
-                            style = MaterialTheme.typography.headlineMedium,
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.ExtraBold,
                             color = PrimaryColor,
                             fontFamily = FontFamily(Font(R.font.playwrite)),

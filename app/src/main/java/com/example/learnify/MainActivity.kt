@@ -6,13 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -20,14 +14,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
-import com.example.learnify.ui.screens.*
-import com.example.learnify.ui.theme.LearnifyTheme
-import com.example.learnify.ui.CourseViewModel
 import com.example.learnify.ui.components.BottomNavigation
+import com.example.learnify.ui.screens.*
 import com.example.learnify.ui.theme.AppBackgroundColor
+import com.example.learnify.ui.theme.LearnifyTheme
+import com.example.learnify.ui.viewModels.CourseViewModel
+import com.example.learnify.ui.viewModels.PomodoroViewModel
+import com.example.learnify.ui.viewModels.ToDoViewModel
 import com.example.learnify.viewmodel.UserViewModel
-import com.example.learnify.ui.PomodoroViewModel
-import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
 
@@ -38,7 +32,6 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             LearnifyTheme {
-
                 val navController = rememberNavController()
                 var selected by remember { mutableStateOf<String?>(null) }
 
@@ -46,15 +39,16 @@ class MainActivity : ComponentActivity() {
                 val courseViewModel: CourseViewModel = viewModel()
                 val timerViewModel: PomodoroViewModel = viewModel()
 
+                val isLoggedIn by userViewModel.isLoggedIn
+
                 LaunchedEffect(Unit) {
                     courseViewModel.initializeFavorites()
                 }
 
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
-                val currentUser = FirebaseAuth.getInstance().currentUser
 
-                val showBottomBar = currentUser != null &&
+                val showBottomBar = isLoggedIn &&
                         currentRoute !in listOf(
                     "login",
                     "signup",
@@ -77,10 +71,9 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { innerPadding ->
-
                     NavHost(
                         navController = navController,
-                        startDestination = if (currentUser == null) "login" else "home",
+                        startDestination = if (isLoggedIn) "home" else "login",
                         modifier = Modifier.padding(innerPadding)
                     ) {
                         composable("login") { LoginScreen(navController, userViewModel) }
@@ -125,7 +118,7 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("courseId") { type = NavType.StringType })
                         ) { backStackEntry ->
                             val courseId = backStackEntry.arguments?.getString("courseId") ?: ""
-                            courseDetailsScreen(
+                            CourseDetailsScreen(
                                 courseId = courseId,
                                 navController = navController,
                                 viewModel = courseViewModel,
