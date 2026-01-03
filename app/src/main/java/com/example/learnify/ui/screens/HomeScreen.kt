@@ -1,8 +1,9 @@
 package com.example.learnify.ui.screens
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.Font
@@ -15,123 +16,142 @@ import com.example.learnify.ui.components.CategoryButton
 import com.example.learnify.ui.components.CourseRowScreen
 import com.example.learnify.ui.components.LearnifyHeader
 import com.example.learnify.ui.theme.PrimaryColor
+import com.example.learnify.ui.viewModels.CourseViewModel
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 
 @Composable
 fun HomeScreen(
-    selected: String? ,
+    selected: String?,
     onSelect: (String) -> Unit,
     onHomeClicked: () -> Unit,
-    navController: NavHostController
+    navController: NavHostController,
+    courseViewModel: CourseViewModel
 ) {
     val programmingTrendingChannelId = "UC8butISFwT-Wl7EV0hUK0BQ"
     val medicalTrendingChannelId = "UCNI0qOojpkhsUtaQ4_2NUhQ"
     val engineeringTrendingChannelId = "UClqhvGmHcvWL9w3R48t9QXQ"
     val marketingTrendingChannelId = "UCaAx1xeTgF3rs4rBPDq6-Kw"
     val languageTrendingChannelId = "UCu8Lth4FT5HxaP0nypE-gTQ"
-    val humanDevelopmentTrendingChannelId = "UCtYzVCmNxrshH4_bPO_-Y-A"
+    val humanDevelopmentTrendingChannelId = "UCtYzVCmNxrshH4_bPO_-YA"
 
     var searchQuery by remember { mutableStateOf("") }
+    val isRefreshing by
+    courseViewModel.isTrendingLoading.observeAsState(false)
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(top = 12.dp)
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            // دنع بحسلا لفسلأ:
+            if (searchQuery.isBlank()) {
+                courseViewModel.refreshTrending("home")
+            } else {
+                courseViewModel.searchCoursesDirect(searchQuery)
+            }
+        },
+        modifier = Modifier.fillMaxSize()
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 12.dp)
+        ) {
+            if (selected == null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.2f)
+                ) {
+                    LearnifyHeader(
+                        onSearch = { searchQuery = it }
+                    )
+                }
 
-        if (selected == null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.08f)
+                        .padding(horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Categories",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryColor,
+                        fontFamily =
+                            FontFamily(Font(R.font.playwrite)),
+                    )
+                }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(0.2f)
-            ) {
-                LearnifyHeader(
-                    onSearch = { searchQuery = it }
-                )
-            }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.25f)
+                ) {
+                    CategoryButton(
+                        selected = selected,
+                        onSelect = onSelect
+                    )
+                }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(0.08f)
-                    .padding(horizontal = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Categories",
-                    style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = PrimaryColor,
-                    fontFamily = FontFamily(Font(R.font.playwrite)),
-                )
-            }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.43f)
+                ) {
+                    CourseRowScreen(
+                        query = if (searchQuery.isBlank()) "Courses"
+                        else searchQuery,
+                        isSearch = searchQuery.isNotBlank(),
+                        navController = navController
+                    )
+                }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(0.25f)
-            ) {
-                CategoryButton(
-                    selected = selected,
-                    onSelect = onSelect
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(0.43f)
-            ) {
-                CourseRowScreen(
-                    query = if (searchQuery.isBlank()) "Courses" else searchQuery,
-                    isSearch = searchQuery.isNotBlank(),
-                    navController = navController
-                )
-            }
-
-        } else {
-            when (selected) {
-                "Programming" -> CategoryScreen(
-                    CategoryName = "Programming Core",
-                    QueryGrid = "programming courses",
-                    TrendingChannelId = programmingTrendingChannelId,
-                    navController = navController
-                )
-
-                "Engineering" -> CategoryScreen(
-                    CategoryName = "Engineering Core",
-                    QueryGrid = "Engineering courses",
-                    TrendingChannelId = engineeringTrendingChannelId,
-                    navController = navController
-                )
-
-                "Medical" -> CategoryScreen(
-                    CategoryName = "Medical Core",
-                    QueryGrid = "medical courses",
-                    TrendingChannelId = medicalTrendingChannelId,
-                    navController = navController
-                )
-
-                "Marketing" -> CategoryScreen(
-                    CategoryName = "Marketing Core",
-                    QueryGrid = "marketing courses",
-                    TrendingChannelId = marketingTrendingChannelId,
-                    navController = navController
-                )
-
-                "Language" -> CategoryScreen(
-                    CategoryName = "Language Core",
-                    QueryGrid = "language courses",
-                    TrendingChannelId = languageTrendingChannelId,
-                    navController = navController
-                )
-
-                "Human Development" -> CategoryScreen(
-                    CategoryName = "Human Development Core",
-                    QueryGrid = "Human Development Courses",
-                    TrendingChannelId = humanDevelopmentTrendingChannelId,
-                    navController = navController
-                )
+            } else {
+                // ضرع تاشاش ماسقلأا
+                when (selected) {
+                    "Programming" -> CategoryScreen(
+                        CategoryName = "Programming Core",
+                        QueryGrid = "programming courses",
+                        TrendingChannelId =
+                            programmingTrendingChannelId,
+                        navController = navController
+                    )
+                    "Engineering" -> CategoryScreen(
+                        CategoryName = "Engineering Core",
+                        QueryGrid = "Engineering courses",
+                        TrendingChannelId =
+                            engineeringTrendingChannelId,
+                        navController = navController
+                    )
+                    "Medical" -> CategoryScreen(
+                        CategoryName = "Medical Core",
+                        QueryGrid = "medical courses",
+                        TrendingChannelId = medicalTrendingChannelId,
+                        navController = navController
+                    )
+                    "Marketing" -> CategoryScreen(
+                        CategoryName = "Marketing Core",
+                        QueryGrid = "marketing courses",
+                        TrendingChannelId =
+                            marketingTrendingChannelId,
+                        navController = navController
+                    )
+                    "Language" -> CategoryScreen(
+                        CategoryName = "Language Core",
+                        QueryGrid = "language courses",
+                        TrendingChannelId =
+                            languageTrendingChannelId,
+                        navController = navController
+                    )
+                    "Human Development" -> CategoryScreen(
+                        CategoryName = "Human Development Core",
+                        QueryGrid = "Human Development Courses",
+                        TrendingChannelId =
+                            humanDevelopmentTrendingChannelId,
+                        navController = navController
+                    )
+                }
             }
         }
     }

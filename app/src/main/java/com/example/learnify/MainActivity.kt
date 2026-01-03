@@ -33,20 +33,39 @@ class MainActivity : ComponentActivity() {
         setContent {
             LearnifyTheme {
                 val navController = rememberNavController()
-                var selected by remember { mutableStateOf<String?>(null) }
+                var selected by remember {
+                    mutableStateOf<String?>(null) }
 
                 val userViewModel: UserViewModel = viewModel()
                 val courseViewModel: CourseViewModel = viewModel()
                 val timerViewModel: PomodoroViewModel = viewModel()
 
                 val isLoggedIn by userViewModel.isLoggedIn
+                val currentUser by userViewModel.currentUser
 
-                LaunchedEffect(Unit) {
-                    courseViewModel.initializeFavorites()
+                LaunchedEffect(isLoggedIn) {
+                    if (!isLoggedIn) {
+                        courseViewModel.clearInternalCache()
+                    }
                 }
 
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
+                LaunchedEffect(isLoggedIn, currentUser) {
+                    if (isLoggedIn && currentUser != null) {
+
+                        courseViewModel.refreshUserSession()
+
+                        courseViewModel.syncCoursesFromFirestore(
+                            favIds = currentUser!!.favorites,
+                            watchIds = currentUser!!.watchlist,
+                            doneIds = currentUser!!.doneCourses
+                        )
+                    }
+                }
+
+                val navBackStackEntry by
+                navController.currentBackStackEntryAsState()
+                val currentRoute =
+                    navBackStackEntry?.destination?.route
 
                 val showBottomBar = isLoggedIn &&
                         currentRoute !in listOf(
@@ -61,6 +80,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier
                         .fillMaxSize()
                         .background(AppBackgroundColor)
+
                         .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
                     bottomBar = {
                         if (showBottomBar) {
@@ -73,31 +93,35 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     NavHost(
                         navController = navController,
-                        startDestination = if (isLoggedIn) "home" else "login",
+                        startDestination = if (isLoggedIn) "home"
+                        else "login",
                         modifier = Modifier.padding(innerPadding)
                     ) {
-                        composable("login") { LoginScreen(navController, userViewModel) }
-                        composable("signup") { SignUpScreen(navController, userViewModel) }
-                        composable("forgot") { ForgotPasswordScreen(navController, userViewModel) }
+                        composable("login") {
+                            LoginScreen(navController, userViewModel) }
+                        composable("signup") {
+                            SignUpScreen(navController, userViewModel) }
+                        composable("forgot") {
+                            ForgotPasswordScreen(navController, userViewModel) }
 
                         composable("home") {
                             HomeScreen(
                                 selected = selected,
                                 onSelect = { selected = it },
                                 onHomeClicked = { selected = null },
-                                navController = navController
+                                navController = navController,
+                                courseViewModel = courseViewModel
                             )
                         }
 
                         composable("pomodoro") {
-                            PomodoroScreen(
-                                navController = navController,
-                                viewModel = timerViewModel
-                            )
+                            PomodoroScreen(navController,
+                                timerViewModel)
                         }
 
                         composable("todo") {
-                            val todoViewModel: ToDoViewModel = viewModel()
+                            val todoViewModel: ToDoViewModel =
+                                viewModel()
                             ToDoScreen(todoViewModel, navController)
                         }
 
@@ -110,14 +134,17 @@ class MainActivity : ComponentActivity() {
                         }
 
                         composable("edit_profile") {
-                            EditProfileScreen(navController, userViewModel)
+                            EditProfileScreen(navController,
+                                userViewModel)
                         }
 
                         composable(
                             route = "courseDetails/{courseId}",
-                            arguments = listOf(navArgument("courseId") { type = NavType.StringType })
+                            arguments =
+                                listOf(navArgument("courseId") { type = NavType.StringType })
                         ) { backStackEntry ->
-                            val courseId = backStackEntry.arguments?.getString("courseId") ?: ""
+                            val courseId =
+                                backStackEntry.arguments?.getString("courseId") ?: ""
                             CourseDetailsScreen(
                                 courseId = courseId,
                                 navController = navController,

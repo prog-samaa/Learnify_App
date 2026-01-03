@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.WatchLater
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,6 +35,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.sp
 import com.example.learnify.R
 import com.example.learnify.ui.viewModels.CourseViewModel
+import androidx.compose.foundation.shape.RoundedCornerShape
+
 
 @Composable
 fun CourseDetailsScreen(
@@ -44,39 +47,29 @@ fun CourseDetailsScreen(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val currentCourse by viewModel.currentCourse.collectAsState()
+
+    val courseDetails by viewModel.getCourseById(courseId ?:
+    "").observeAsState()
 
     LaunchedEffect(courseId) {
         courseId?.let { viewModel.loadCourse(it) }
     }
 
-    if (currentCourse == null) {
+    if (courseDetails == null) {
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier =
+                Modifier.fillMaxSize().background(AppBackgroundColor),
             contentAlignment = Alignment.Center
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.internet_error_icon),
-                    contentDescription = "No Tasks Image",
-                    modifier = Modifier.size(270.dp)
-                )
-
+            Column(horizontalAlignment =
+                Alignment.CenterHorizontally) {
+                CircularProgressIndicator(color = PrimaryColor)
                 Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "Error...",
-                    fontSize = 24.sp,
-                    color = Color.Gray,
-                    fontFamily = FontFamily(Font(R.font.playwrite))
-                )
+                Text("Loading course details...", color = Color.Gray)
             }
         }
-
     } else {
-        currentCourse?.let { course ->
+        courseDetails?.let { course ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -89,7 +82,7 @@ fun CourseDetailsScreen(
                     contentDescription = course.title,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp),
+                        .height(220.dp),
                     contentScale = ContentScale.Crop
                 )
 
@@ -100,122 +93,139 @@ fun CourseDetailsScreen(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement =
+                        Arrangement.spacedBy(8.dp)) {
+
                         IconButton(onClick = {
                             coroutineScope.launch {
-                                val newFavoriteState = !course.isFavorite
-                                viewModel.toggleFavorite(course.id, newFavoriteState)
-                                if (newFavoriteState) {
+                                val newState = !course.isFavorite
+                                viewModel.toggleFavorite(course.id,
+                                    newState)
+                                if (newState)
                                     userViewModel.addToFavorites(course.id)
-                                    Toast.makeText(context, "Added to favorites", Toast.LENGTH_SHORT).show()
-                                } else {
+                                else
                                     userViewModel.removeFromFavorites(course.id)
-                                    Toast.makeText(context, "Removed from favorites", Toast.LENGTH_SHORT).show()
-                                }
+
+                                Toast.makeText(context, if(newState)
+                                    "Added to favorites" else "Removed", Toast.LENGTH_SHORT).show()
                             }
                         }) {
                             Icon(
                                 imageVector = Icons.Default.Favorite,
-                                contentDescription = "Like",
-                                tint = if (course.isFavorite) Color.Red else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                                contentDescription = "Favorite",
+                                tint = if (course.isFavorite)
+                                    Color.Red else Color.Gray.copy(alpha = 0.6f)
                             )
                         }
 
                         IconButton(onClick = {
                             coroutineScope.launch {
-                                val newWatchLaterState = !course.isWatchLater
-                                viewModel.toggleWatchLater(course.id, newWatchLaterState)
-                                if (newWatchLaterState) {
+                                val newState = !course.isWatchLater
+                                viewModel.toggleWatchLater(course.id,
+                                    newState)
+                                if (newState)
                                     userViewModel.addToWatchlist(course.id)
-                                    Toast.makeText(context, "Added to watchlist", Toast.LENGTH_SHORT).show()
-                                } else {
+                                else
                                     userViewModel.removeFromWatchlist(course.id)
-                                    Toast.makeText(context, "Removed from watchlist", Toast.LENGTH_SHORT).show()
-                                }
+
+                                Toast.makeText(context, if(newState)
+                                    "Added to Watchlist" else "Removed", Toast.LENGTH_SHORT).show()
                             }
                         }) {
                             Icon(
-                                imageVector = Icons.Default.WatchLater,
+                                imageVector =
+                                    Icons.Default.WatchLater,
                                 contentDescription = "Watch Later",
-                                tint = if (course.isWatchLater) Color(0xFF7232BE) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                                tint = if (course.isWatchLater)
+                                    Color(0xFF7232BE) else Color.Gray.copy(alpha = 0.6f)
                             )
                         }
 
                         IconButton(onClick = {
                             coroutineScope.launch {
-                                val newDoneState = !course.isDone
-                                viewModel.toggleDone(course.id, newDoneState)
-                                if (newDoneState) {
+                                val newState = !course.isDone
+                                viewModel.toggleDone(course.id,
+                                    newState)
+                                if (newState)
                                     userViewModel.addToDoneCourses(course.id)
-                                    Toast.makeText(context, "Marked as completed", Toast.LENGTH_SHORT).show()
-                                } else {
+                                else
                                     userViewModel.removeFromDoneCourses(course.id)
-                                    Toast.makeText(context, "Removed from completed", Toast.LENGTH_SHORT).show()
-                                }
+
+                                Toast.makeText(context, if(newState)
+                                    "Course Completed!" else "Removed from Done",
+                                    Toast.LENGTH_SHORT).show()
                             }
                         }) {
                             Icon(
                                 imageVector = Icons.Default.CheckBox,
-                                contentDescription = "Mark as Done",
-                                tint = if (course.isDone) Color(0xFF4CAF50) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                                contentDescription = "Done",
+                                tint = if (course.isDone)
+                                    Color(0xFF4CAF50) else Color.Gray.copy(alpha = 0.6f)
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
+                // ليصافت سروكلا
                 Text(
                     text = course.title,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "By ${course.channelTitle}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = " ${course.publishedAt}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = course.description,
-                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Channel: ${course.channelTitle}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = PrimaryColor,
+                    fontWeight = FontWeight.Medium
+                )
+
+                Text(
+                    text = "Published: ${course.publishedAt}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                Text(
+                    text = "Description",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = course.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color =
+                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
                 Button(
                     onClick = {
-                        val intent = Intent(
-                            Intent.ACTION_VIEW,
-                            Uri.parse("https://www.youtube.com/playlist?list=${course.id}")
-                        )
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        val intent = Intent(Intent.ACTION_VIEW,
+                            Uri.parse("https://www.youtube.com/playlist?list=${course.id}"))
                         context.startActivity(intent)
                     },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = PrimaryColor,
-                        contentColor = Color.White
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    colors =
+                        ButtonDefaults.buttonColors(containerColor = PrimaryColor),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Watch on YouTube")
+                    Text("Start Learning on YouTube", fontWeight =
+                        FontWeight.Bold, fontSize = 16.sp)
                 }
+
+                Spacer(modifier = Modifier.height(30.dp))
             }
         }
     }

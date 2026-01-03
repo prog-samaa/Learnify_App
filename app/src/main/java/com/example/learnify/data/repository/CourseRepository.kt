@@ -13,7 +13,7 @@ import com.google.firebase.auth.FirebaseAuth
 
 class CourseRepository(private val dao: CourseDao) {
 
-    private val apiKey = "Api key"
+    private val apiKey = "Your API key"
 
     private fun getUid(): String = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
@@ -25,13 +25,14 @@ class CourseRepository(private val dao: CourseDao) {
     suspend fun toggleWatchLater(courseId: String, value: Boolean) = dao.setWatchLater(courseId, getUid(), value)
     suspend fun toggleDone(courseId: String, value: Boolean) = dao.setDone(courseId, getUid(), value)
 
-    fun getTrendingLive(category: String): LiveData<List<CourseEntity>> = dao.getTrendingByCategory(category)
+    fun getTrendingLive(category: String): LiveData<List<CourseEntity>> = dao.getTrendingByCategory(category, getUid())
 
     suspend fun saveTrending(list: List<ChannelCourse>, channelId: String) {
         val currentUid = getUid()
-        val existingCourses = dao.getCoursesList(true).associateBy { it.id }
 
-        dao.clearTrendingForCategory(channelId)
+        val existingCourses = dao.getCoursesList(true, currentUid).associateBy { it.id }
+
+        dao.clearTrendingForCategory(channelId, currentUid)
         dao.insertCourses(list.map { channelCourse ->
             val existingCourse = existingCourses[channelCourse.id]
             channelCourse.toEntity(
@@ -48,12 +49,14 @@ class CourseRepository(private val dao: CourseDao) {
     suspend fun searchAndSave(query: String, categoryKey: String): List<CourseEntity> {
         val currentUid = getUid()
         return try {
-            val playlists = withContext(Dispatchers.IO) { RetrofitInstance.api.searchPlaylists(query = query, apiKey = apiKey) }
+            val playlists = withContext(Dispatchers.IO) {
+                RetrofitInstance.api.searchPlaylists(query = query, apiKey = apiKey)
+            }
             val courses = playlists.items.map { playlist ->
                 playlist.copy(rating = calculateRatingForPlaylist(playlist.playlistId.playlistId))
             }
 
-            val existingCourses = dao.getCoursesList(false).associateBy { it.id }
+            val existingCourses = dao.getCoursesList(false, currentUid).associateBy { it.id }
             val entities = courses.map { searchCourse ->
                 val existingCourse = existingCourses[searchCourse.playlistId.playlistId]
                 searchCourse.toEntity(
@@ -66,26 +69,36 @@ class CourseRepository(private val dao: CourseDao) {
                 )
             }
 
-            dao.clearCoursesForCategory(categoryKey)
+            dao.clearCoursesForCategory(categoryKey, currentUid)
             dao.insertCourses(entities)
             entities
         } catch (e: Exception) {
-            dao.getCoursesListByCategory(categoryKey).ifEmpty { dao.getCoursesList(false) }
+            dao.getCoursesListByCategory(categoryKey, currentUid).ifEmpty {
+                dao.getCoursesList(false, currentUid)
+            }
         }
     }
 
     suspend fun searchDirect(query: String): List<SearchCourse> {
         return try {
-            val playlists = withContext(Dispatchers.IO) { RetrofitInstance.api.searchPlaylists(query = query, apiKey = apiKey) }
+            val playlists = withContext(Dispatchers.IO) {
+                RetrofitInstance.api.searchPlaylists(query = query, apiKey = apiKey)
+            }
             playlists.items.map { playlist ->
                 playlist.copy(rating = calculateRatingForPlaylist(playlist.playlistId.playlistId))
             }
         } catch (e: Exception) { emptyList() }
     }
 
+    suspend fun saveSearchDirectResults(courses: List<CourseEntity>) {
+        dao.insertCourses(courses)
+    }
+
     suspend fun getTrendingFromAPI(channelId: String): List<ChannelCourse> {
         return try {
-            withContext(Dispatchers.IO) { RetrofitInstance.api.getChannelPlaylists(channelId = channelId, apiKey = apiKey).items }
+            withContext(Dispatchers.IO) {
+                RetrofitInstance.api.getChannelPlaylists(channelId = channelId, apiKey = apiKey).items
+            }
         } catch (e: Exception) { emptyList() }
     }
 
@@ -94,9 +107,13 @@ class CourseRepository(private val dao: CourseDao) {
 
     private suspend fun calculateRatingForPlaylist(playlistId: String): Float? {
         return try {
-            val playlistItems = RetrofitInstance.api.getPlaylistItems(playlistId = playlistId, apiKey = apiKey)
+            val playlistItems = withContext(Dispatchers.IO) {
+                RetrofitInstance.api.getPlaylistItems(playlistId = playlistId, apiKey = apiKey)
+            }
             val firstVideoId = playlistItems.items.firstOrNull()?.contentDetails?.videoId ?: return null
-            val videoStats = RetrofitInstance.api.getVideoStats(videoId = firstVideoId, apiKey = apiKey)
+            val videoStats = withContext(Dispatchers.IO) {
+                RetrofitInstance.api.getVideoStats(videoId = firstVideoId, apiKey = apiKey)
+            }
             val stats = videoStats.items.firstOrNull()?.statistics ?: return null
 
             val views = stats.viewCount.toFloatOrNull() ?: return null
@@ -114,6 +131,7 @@ class CourseRepository(private val dao: CourseDao) {
         } catch (e: Exception) { null }
     }
 }
+
 
 fun SearchCourse.toEntity(
     userId: String,
@@ -159,18 +177,4 @@ fun ChannelCourse.toEntity(
     isFavorite = isFavorite,
     isWatchLater = isWatchLater,
     isDone = isDone
-)
-
-fun CourseEntity.toChannelCourse() = ChannelCourse(
-    details = com.example.learnify.data.model.PlaylistSnippet(
-        courseTitle = this.title,
-        courseDescription = this.description,
-        channelTitle = this.channelTitle,
-        publishTime = this.publishedAt,
-        imageUrl = com.example.learnify.data.model.PlaylistThumbnails(
-            thumbnail = com.example.learnify.data.model.ThumbnailDetail(this.imageUrl)
-        )
-    ),
-    id = this.id,
-    rating = this.rating
 )

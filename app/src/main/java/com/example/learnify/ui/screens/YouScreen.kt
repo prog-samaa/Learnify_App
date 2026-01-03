@@ -1,5 +1,14 @@
 package com.example.learnify.ui.screens
 
+import android.content.Context
+import android.view.Gravity
+import android.widget.TextView
+import android.widget.Toast
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,31 +19,30 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckBox
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.WatchLater
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.learnify.data.local.CourseEntity
-import com.example.learnify.viewmodel.UserViewModel
 import com.example.learnify.ui.components.CourseCard
 import com.example.learnify.ui.theme.AppBackgroundColor
 import com.example.learnify.ui.theme.PrimaryColor
 import com.example.learnify.ui.viewModels.CourseViewModel
 import com.example.learnify.ui.viewModels.ToDoViewModel
+import com.example.learnify.viewmodel.UserViewModel
+import android.graphics.drawable.GradientDrawable
 
 @Composable
 fun YouScreen(
@@ -42,11 +50,20 @@ fun YouScreen(
     userViewModel: UserViewModel,
     courseViewModel: CourseViewModel
 ) {
+    val context = LocalContext.current
+
     val user by userViewModel.currentUser
     val errorMessage by userViewModel.errorMessage
+
     val favoriteCourses by courseViewModel.favoriteCourses.observeAsState(emptyList())
     val watchLaterCourses by courseViewModel.watchLaterCourses.observeAsState(emptyList())
     val doneCourses by courseViewModel.doneCourses.observeAsState(emptyList())
+
+    val isSyncing by courseViewModel.isSyncing.observeAsState(false)
+    val syncMessage by courseViewModel.syncMessage.observeAsState()
+
+    var showToastOnlyForManualSync by remember { mutableStateOf(false) }
+
     val scrollState = rememberScrollState()
     val todoViewModel: ToDoViewModel = viewModel()
 
@@ -60,33 +77,29 @@ fun YouScreen(
         }
     }
 
+    LaunchedEffect(syncMessage) {
+        syncMessage?.let { msg ->
+            if (showToastOnlyForManualSync) {
+                showGreenTextToast(context, msg)
+            }
+            courseViewModel.clearSyncMessage()
+            showToastOnlyForManualSync = false
+        }
+    }
+
     if (user == null) {
         if (!errorMessage.isNullOrEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Error: $errorMessage",
-                    color = Color.Red,
-                    fontWeight = FontWeight.Bold
-                )
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(text = "Error: $errorMessage", color = Color.Red, fontWeight = FontWeight.Bold)
             }
         } else {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     CircularProgressIndicator(color = PrimaryColor)
-                    Text(
-                        text = "Loading user data...",
-                        color = Color.Gray,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Text(text = "Loading user data...", color = Color.Gray, fontWeight = FontWeight.Medium)
                 }
             }
         }
@@ -94,6 +107,7 @@ fun YouScreen(
     }
 
     Scaffold { padding ->
+
         Column(
             modifier = Modifier
                 .padding(padding)
@@ -106,6 +120,27 @@ fun YouScreen(
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    AnimatedRefreshButton(
+                        isSyncing = isSyncing,
+                        onRefresh = {
+                            showToastOnlyForManualSync = true
+
+                            user?.let {
+                                courseViewModel.syncCoursesFromFirestore(
+                                    favIds = it.favorites,
+                                    watchIds = it.watchlist,
+                                    doneIds = it.doneCourses
+                                )
+                            }
+                        }
+                    )
+                }
+
                 Row(
                     verticalAlignment = Alignment.Top,
                     modifier = Modifier.fillMaxWidth()
@@ -137,26 +172,11 @@ fun YouScreen(
 
                     Spacer(Modifier.width(16.dp))
 
-                    Column(
-                        verticalArrangement = Arrangement.Top,
-                        modifier = Modifier.weight(1f)
-                    ) {
+                    Column(modifier = Modifier.weight(1f)) {
                         Spacer(Modifier.height(8.dp))
-                        Text(
-                            user!!.name,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.headlineSmall
-                        )
-                        Text(
-                            user!!.email,
-                            color = Color.Gray,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        Text(
-                            user!!.phone,
-                            color = Color.Gray,
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                        Text(user!!.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                        Text(user!!.email, color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                        Text(user!!.phone, color = Color.Gray, style = MaterialTheme.typography.bodySmall)
                     }
                 }
 
@@ -164,17 +184,11 @@ fun YouScreen(
 
                 Button(
                     onClick = { navController.navigate("edit_profile") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor)
                 ) {
-                    Text(
-                        "Edit Profile",
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                    Text("Edit Profile", color = Color.White, style = MaterialTheme.typography.bodyLarge)
                 }
 
                 Spacer(Modifier.height(24.dp))
@@ -221,48 +235,38 @@ fun YouScreen(
 
                 Button(
                     onClick = { showLogoutDialog = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .padding(horizontal = 20.dp),
+                    modifier = Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 20.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
                 ) {
-                    Text(
-                        "Logout",
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text("Logout", color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
 
                 if (showLogoutDialog) {
                     AlertDialog(
                         onDismissRequest = { showLogoutDialog = false },
                         title = { Text("Confirm Logout") },
-                        text = { Text("Logging out will delete all your tasks data. Are you sure you want to continue?") },
+                        text = { Text("Are you sure you want to logout? This will clear all local data for this account.") },
                         confirmButton = {
                             TextButton(
                                 onClick = {
                                     todoViewModel.clearAllTasks()
-                                    userViewModel.logout()
-                                    navController.navigate("login") {
-                                        popUpTo("home") { inclusive = true }
+                                    courseViewModel.clearInternalCache()
+                                    courseViewModel.clearDatabaseForUser()
+
+                                    userViewModel.logout {
+                                        navController.navigate("login") {
+                                            popUpTo(0) { inclusive = true }
+                                        }
                                     }
                                     showLogoutDialog = false
                                 }
                             ) {
-                                Text(
-                                    "Yes",
-                                    color = Color.Red,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Text("Yes", color = Color.Red, fontWeight = FontWeight.Bold)
                             }
                         },
                         dismissButton = {
-                            TextButton(onClick = { showLogoutDialog = false }) {
-                                Text("No")
-                            }
+                            TextButton(onClick = { showLogoutDialog = false }) { Text("No") }
                         }
                     )
                 }
@@ -270,6 +274,34 @@ fun YouScreen(
                 Spacer(Modifier.height(40.dp))
             }
         }
+    }
+}
+
+@Composable
+private fun AnimatedRefreshButton(
+    isSyncing: Boolean,
+    onRefresh: () -> Unit
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "sync_rotation")
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 800, easing = LinearEasing)
+        ),
+        label = "rotation"
+    )
+
+    IconButton(
+        onClick = onRefresh,
+        enabled = !isSyncing
+    ) {
+        Icon(
+            imageVector = Icons.Default.Refresh,
+            contentDescription = "Refresh",
+            tint = if (isSyncing) Color.Gray else PrimaryColor,
+            modifier = Modifier.rotate(if (isSyncing) rotation else 0f)
+        )
     }
 }
 
@@ -384,27 +416,10 @@ fun ProfileStatsSection(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                StatItem(
-                    count = favoriteCount,
-                    label = "Favorites",
-                    color = Color(0xFFFF6B6B)
-                )
-
-                StatItem(
-                    count = watchLaterCount,
-                    label = "Watch Later",
-                    color = Color(0xFF4ECDC4)
-                )
-                StatItem(
-                    count = doneCount,
-                    label = "Completed",
-                    color = Color(0xFF4CAF50)
-                )
-                StatItem(
-                    count = favoriteCount + watchLaterCount + doneCount,
-                    label = "Total",
-                    color = Color(0xFFFFD93D)
-                )
+                StatItem(count = favoriteCount, label = "Favorites", color = Color(0xFFFF6B6B))
+                StatItem(count = watchLaterCount, label = "Watch Later", color = Color(0xFF4ECDC4))
+                StatItem(count = doneCount, label = "Completed", color = Color(0xFF4CAF50))
+                StatItem(count = favoriteCount + watchLaterCount + doneCount, label = "Total", color = Color(0xFFFFD93D))
             }
         }
     }
@@ -416,9 +431,7 @@ fun StatItem(
     label: String,
     color: Color
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = count.toString(),
             style = MaterialTheme.typography.headlineMedium,
@@ -432,3 +445,27 @@ fun StatItem(
         )
     }
 }
+
+private fun showGreenTextToast(context: Context, message: String) {
+    val tv = TextView(context).apply {
+        text = message
+        setTextColor(0xFF2E7D32.toInt())
+        textSize = 14f
+        setPadding(48, 22, 48, 22)
+
+        background = GradientDrawable().apply {
+            setColor(android.graphics.Color.WHITE)
+            cornerRadius = 36f
+        }
+
+        elevation = 6f
+    }
+
+    Toast(context).apply {
+        duration = Toast.LENGTH_SHORT
+        view = tv
+        setGravity(Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL, 0, 280)
+        show()
+    }
+}
+
