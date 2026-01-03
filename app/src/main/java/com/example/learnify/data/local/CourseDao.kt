@@ -33,27 +33,25 @@ interface CourseDao {
     @Query("SELECT * FROM course_table WHERE id = :courseId AND userId = :userId LIMIT 1")
     fun getCourseById(courseId: String, userId: String): LiveData<CourseEntity>
 
-    @Query("SELECT * FROM course_table WHERE id IN (:ids)")
-    fun getCoursesByIds(ids: List<String>): LiveData<List<CourseEntity>>
+    @Query("SELECT * FROM course_table WHERE isTrending = 1 AND category = :category AND userId = :userId ORDER BY publishedAt DESC")
+    fun getTrendingByCategory(category: String, userId: String): LiveData<List<CourseEntity>>
+
+    @Query("SELECT * FROM course_table WHERE isTrending = 0 AND category = :category AND userId = :userId ORDER BY publishedAt DESC")
+    suspend fun getCoursesListByCategory(category: String, userId: String): List<CourseEntity>
+
+    @Query("SELECT * FROM course_table WHERE isTrending = :trending AND userId = :userId ORDER BY publishedAt DESC")
+    suspend fun getCoursesList(trending: Boolean, userId: String): List<CourseEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCourses(courses: List<CourseEntity>)
 
-    @Query("SELECT * FROM course_table WHERE isTrending = 1 AND category = :category ORDER BY publishedAt DESC")
-    fun getTrendingByCategory(category: String): LiveData<List<CourseEntity>>
+    @Query("DELETE FROM course_table WHERE isTrending = 1 AND category = :category AND userId = :userId")
+    suspend fun clearTrendingForCategory(category: String, userId: String)
 
-    @Query("SELECT * FROM course_table WHERE isTrending = 0 AND category = :category ORDER BY publishedAt DESC")
-    fun getCoursesByCategory(category: String): LiveData<List<CourseEntity>>
+    @Query("DELETE FROM course_table WHERE isTrending = 0 AND category = :category AND userId = :userId")
+    suspend fun clearCoursesForCategory(category: String, userId: String)
 
-    @Query("SELECT * FROM course_table WHERE isTrending = :trending ORDER BY publishedAt DESC")
-    suspend fun getCoursesList(trending: Boolean): List<CourseEntity>
+    @Query("DELETE FROM course_table WHERE userId = :userId")
+    suspend fun clearAllUserData(userId: String)
 
-    @Query("SELECT * FROM course_table WHERE isTrending = 0 AND category = :category ORDER BY publishedAt DESC")
-    suspend fun getCoursesListByCategory(category: String): List<CourseEntity>
-
-    @Query("DELETE FROM course_table WHERE isTrending = 1 AND category = :category")
-    suspend fun clearTrendingForCategory(category: String)
-
-    @Query("DELETE FROM course_table WHERE isTrending = 0 AND category = :category")
-    suspend fun clearCoursesForCategory(category: String)
 }

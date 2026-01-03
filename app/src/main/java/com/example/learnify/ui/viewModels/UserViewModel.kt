@@ -39,22 +39,26 @@ class UserViewModel : ViewModel() {
                     email = data["email"] as? String ?: "",
                     phone = data["phone"] as? String ?: "",
                     imageUrl = data["imageUrl"] as? String ?: "",
-                    watchlist = data["watchlist"] as? List<String> ?: emptyList(),
-                    favorites = data["favorites"] as? List<String> ?: emptyList(),
-                    doneCourses = data["doneCourses"] as? List<String> ?: emptyList()
+                    watchlist = data["watchlist"] as? List<String> ?:
+                    emptyList(),
+                    favorites = data["favorites"] as? List<String> ?:
+                    emptyList(),
+                    doneCourses = data["doneCourses"] as?
+                            List<String> ?: emptyList()
                 )
                 isLoggedIn.value = true
             }
         }
     }
 
-    fun register(name: String, email: String, phone: String, password: String) {
+    fun register(name: String, email: String, phone: String,
+                 password: String) {
         viewModelScope.launch {
             try {
                 repo.registerUser(name, email, phone, password)
                 isSuccess.value = true
             } catch (e: Exception) {
-                errorMessage.value = e.message ?: "Registration failed"
+                errorMessage.value = e.message ?: "Registratio failed"
                 isSuccess.value = false
             }
         }
@@ -73,7 +77,7 @@ class UserViewModel : ViewModel() {
             } catch (e: Exception) {
                 errorMessage.value = when (e) {
                     is FirebaseAuthInvalidCredentialsException,
-                    is FirebaseAuthInvalidUserException -> "Incorrect email or password !"
+                    is FirebaseAuthInvalidUserException -> "Incorrec email or password !"
                     is FirebaseNetworkException -> "Please check your internet connection"
                     else -> e.message ?: "Login failed !"
                 }
@@ -85,7 +89,8 @@ class UserViewModel : ViewModel() {
         repo.resetPassword(email)
     }
 
-    suspend fun verifyCurrentPassword(currentPassword: String): Boolean {
+    suspend fun verifyCurrentPassword(currentPassword: String):
+            Boolean {
         return try {
             repo.verifyPassword(currentPassword)
         } catch (e: Exception) {
@@ -96,14 +101,18 @@ class UserViewModel : ViewModel() {
     fun validateNewPassword(password: String): ValidationResult {
         return when {
             password.length < 6 -> ValidationResult(false, "Password must be at least 6 characters long")
-            !password.any { it.isDigit() } -> ValidationResult(false, "Password must contain at least one number")
-            !password.any { it.isLetter() } -> ValidationResult(false, "Password must contain at least one letter")
-            !password.any { !it.isLetterOrDigit() } -> ValidationResult(false, "Password must contain at least one special character")
-            else -> ValidationResult(true, "Password is valid")
+                !password.any { it.isDigit() } -> ValidationResult(false,
+                "Password must contain at least one number")
+            !password.any { it.isLetter() } ->
+                ValidationResult(false, "Password must contain at least one letter")
+            !password.any { !it.isLetterOrDigit() } ->
+                ValidationResult(false, "Password must contain at least one special character")
+                    else -> ValidationResult(true, "Password is valid")
         }
     }
 
-    fun changePassword(currentPassword: String, newPassword: String) {
+    fun changePassword(currentPassword: String, newPassword: String)
+    {
         viewModelScope.launch {
             try {
                 val ok = repo.verifyPassword(currentPassword)
@@ -138,7 +147,8 @@ class UserViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 updateNameAndPhone(name, phone)
-                if (!newPassword.isNullOrEmpty() && !currentPassword.isNullOrEmpty()) {
+                if (!newPassword.isNullOrEmpty() &&
+                    !currentPassword.isNullOrEmpty()) {
                     changePassword(currentPassword, newPassword)
                 }
                 onDone()
@@ -151,10 +161,13 @@ class UserViewModel : ViewModel() {
     fun addToFavorites(courseId: String) {
         viewModelScope.launch {
             try {
-                val currentFavorites = currentUser.value?.favorites ?: emptyList()
+                val currentFavorites = currentUser.value?.favorites
+                    ?: emptyList()
                 if (!currentFavorites.contains(courseId)) {
-                    val updatedFavorites = currentFavorites + courseId
-                    repo.updateUserInfo(updates = mapOf("favorites" to updatedFavorites))
+                    val updatedFavorites = currentFavorites +
+                            courseId
+                    repo.updateUserInfo(updates = mapOf("favorites"
+                            to updatedFavorites))
                 }
                 repo.addToFavorites(courseId)
             } catch (e: Exception) {
@@ -166,9 +179,11 @@ class UserViewModel : ViewModel() {
     fun removeFromFavorites(courseId: String) {
         viewModelScope.launch {
             try {
-                val currentFavorites = currentUser.value?.favorites ?: emptyList()
-                val updatedFavorites = currentFavorites.filter { it != courseId }
-                repo.updateUserInfo(updates = mapOf("favorites" to updatedFavorites))
+                val currentFavorites = currentUser.value?.favorites
+                    ?: emptyList()
+                val updatedFavorites = currentFavorites.filter { it!= courseId }
+                repo.updateUserInfo(updates = mapOf("favorites" to
+                        updatedFavorites))
                 repo.removeFromFavorites(courseId)
             } catch (e: Exception) {
                 errorMessage.value = "Failed to remove from favorites"
@@ -179,10 +194,13 @@ class UserViewModel : ViewModel() {
     fun addToWatchlist(courseId: String) {
         viewModelScope.launch {
             try {
-                val currentWatchlist = currentUser.value?.watchlist ?: emptyList()
+                val currentWatchlist = currentUser.value?.watchlist
+                    ?: emptyList()
                 if (!currentWatchlist.contains(courseId)) {
-                    val updatedWatchlist = currentWatchlist + courseId
-                    repo.updateUserInfo(updates = mapOf("watchlist" to updatedWatchlist))
+                    val updatedWatchlist = currentWatchlist +
+                            courseId
+                    repo.updateUserInfo(updates = mapOf("watchlist"
+                            to updatedWatchlist))
                 }
                 repo.addToWatchlist(courseId)
             } catch (e: Exception) {
@@ -194,9 +212,11 @@ class UserViewModel : ViewModel() {
     fun removeFromWatchlist(courseId: String) {
         viewModelScope.launch {
             try {
-                val currentWatchlist = currentUser.value?.watchlist ?: emptyList()
-                val updatedWatchlist = currentWatchlist.filter { it != courseId }
-                repo.updateUserInfo(updates = mapOf("watchlist" to updatedWatchlist))
+                val currentWatchlist = currentUser.value?.watchlist
+                    ?: emptyList()
+                val updatedWatchlist = currentWatchlist.filter { it!= courseId }
+                repo.updateUserInfo(updates = mapOf("watchlist" to
+                        updatedWatchlist))
                 repo.removeFromWatchlist(courseId)
             } catch (e: Exception) {
                 errorMessage.value = "Failed to remove from watchlist"
@@ -207,10 +227,13 @@ class UserViewModel : ViewModel() {
     fun addToDoneCourses(courseId: String) {
         viewModelScope.launch {
             try {
-                val currentDoneCourses = currentUser.value?.doneCourses ?: emptyList()
+                val currentDoneCourses =
+                    currentUser.value?.doneCourses ?: emptyList()
                 if (!currentDoneCourses.contains(courseId)) {
-                    val updatedDoneCourses = currentDoneCourses + courseId
-                    repo.updateUserInfo(updates = mapOf("doneCourses" to updatedDoneCourses))
+                    val updatedDoneCourses = currentDoneCourses +
+                            courseId
+                    repo.updateUserInfo(updates = mapOf("doneCourses"
+                            to updatedDoneCourses))
                 }
                 repo.addToDoneCourses(courseId)
             } catch (e: Exception) {
@@ -222,9 +245,12 @@ class UserViewModel : ViewModel() {
     fun removeFromDoneCourses(courseId: String) {
         viewModelScope.launch {
             try {
-                val currentDoneCourses = currentUser.value?.doneCourses ?: emptyList()
-                val updatedDoneCourses = currentDoneCourses.filter { it != courseId }
-                repo.updateUserInfo(updates = mapOf("doneCourses" to updatedDoneCourses))
+                val currentDoneCourses =
+                    currentUser.value?.doneCourses ?: emptyList()
+                val updatedDoneCourses = currentDoneCourses.filter {
+                    it != courseId }
+                repo.updateUserInfo(updates = mapOf("doneCourses" to
+                        updatedDoneCourses))
                 repo.removeFromDoneCourses(courseId)
             } catch (e: Exception) {
                 errorMessage.value = "Failed to remove from completed courses"
@@ -262,11 +288,14 @@ class UserViewModel : ViewModel() {
         }
     }
 
-    fun logout(courseRepository: CourseRepository? = null) {
+    fun logout(onComplete: () -> Unit) {
         viewModelScope.launch {
             repo.logout()
+            // حسم ةلاحلا ً ً ايلحم
             isLoggedIn.value = false
             currentUser.value = null
+            isSuccess.value = false
+            onComplete()
         }
     }
 
