@@ -13,7 +13,7 @@ import com.google.firebase.auth.FirebaseAuth
 
 class CourseRepository(private val dao: CourseDao) {
 
-    private val apiKey = "Your API key"
+    private val apiKey = "AIzaSyD_Nntb2yllML53TAqll67lTzZaJNKFe3w"
 
     private fun getUid(): String = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
@@ -29,7 +29,6 @@ class CourseRepository(private val dao: CourseDao) {
 
     suspend fun saveTrending(list: List<ChannelCourse>, channelId: String) {
         val currentUid = getUid()
-
         val existingCourses = dao.getCoursesList(true, currentUid).associateBy { it.id }
 
         dao.clearTrendingForCategory(channelId, currentUid)
@@ -90,10 +89,6 @@ class CourseRepository(private val dao: CourseDao) {
         } catch (e: Exception) { emptyList() }
     }
 
-    suspend fun saveSearchDirectResults(courses: List<CourseEntity>) {
-        dao.insertCourses(courses)
-    }
-
     suspend fun getTrendingFromAPI(channelId: String): List<ChannelCourse> {
         return try {
             withContext(Dispatchers.IO) {
@@ -131,7 +126,6 @@ class CourseRepository(private val dao: CourseDao) {
         } catch (e: Exception) { null }
     }
 }
-
 
 fun SearchCourse.toEntity(
     userId: String,

@@ -75,23 +75,16 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun syncCoursesFromFirestore(
-        favIds: List<String>,
-        watchIds: List<String>,
-        doneIds: List<String>
-    ) {
+    fun syncCoursesFromFirestore(favIds: List<String>, watchIds: List<String>, doneIds: List<String>) {
         if (_isSyncing.value == true) return
 
         viewModelScope.launch {
             _isSyncing.value = true
-
             try {
                 val allIds = (favIds + watchIds + doneIds).distinct()
                 val uid = getUid()
-
                 allIds.forEach { id ->
                     val exists = repository.getCourseByIdDirect(id)
-
                     if (exists == null) {
                         repository.searchAndSave(query = id, categoryKey = "synced_courses")
                     } else {
@@ -104,7 +97,6 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
                         dao.insertCourses(listOf(updatedCourse))
                     }
                 }
-
                 _syncMessage.postValue("Updated successfully ✅")
             } catch (e: Exception) {
                 _syncMessage.postValue("Update failed: ${e.message ?: "Unknown error"}")
@@ -144,13 +136,12 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
     val generalError: LiveData<String?> = _generalError
 
     private val generalMap = mutableMapOf<String, MutableLiveData<List<CourseEntity>>>()
+    private val loadedSearchQueries = mutableSetOf<String>()
+    private val loadedTrending = mutableSetOf<String>()
 
     fun generalCoursesByCategory(category: String): LiveData<List<CourseEntity>> {
         return generalMap.getOrPut(category) { MutableLiveData(emptyList()) }
     }
-
-    private val loadedSearchQueries = mutableSetOf<String>()
-    private val loadedTrending = mutableSetOf<String>()
 
     fun getCourseById(id: String): LiveData<CourseEntity> {
         return repository.getCourseById(id)
@@ -159,7 +150,6 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
     fun searchCourses(query: String) {
         val q = query.trim()
         if (q.isEmpty()) return
-
         val categoryKey = detectCategoryKeyFromQuery(q)
         val liveData = generalMap.getOrPut(categoryKey) { MutableLiveData(emptyList()) }
 
@@ -195,7 +185,6 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
     fun getTrendingCourses(category: String) {
         val id = category.trim()
         if (id.isEmpty() || loadedTrending.contains(id)) return
-
         viewModelScope.launch {
             _isTrendingLoading.value = true
             try {
@@ -223,9 +212,7 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
             try {
                 val result = repository.searchDirect(query)
                 val uid = getUid()
-                val entities = result.map {
-                    it.toEntity(userId = uid, isTrending = false, category = "search")
-                }
+                val entities = result.map { it.toEntity(userId = uid, isTrending = false, category = "search") }
                 dao.insertCourses(entities)
                 _searchResults.value = entities
                 _searchError.value = null

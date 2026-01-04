@@ -46,7 +46,6 @@ class UserRepository {
 
     fun resetPassword(email: String) = auth.sendPasswordResetEmail(email)
     fun getCurrentUser() = auth.currentUser
-
     fun logout() {
         auth.signOut()
     }
@@ -60,7 +59,6 @@ class UserRepository {
         }
     }
 
-    // تحديث البيانات الأساسية
     suspend fun updateUserInfo(name: String, phone: String) {
         val uid = getCurrentUid() ?: return
         users.document(uid).update(mapOf("name" to name, "phone" to phone)).await()
@@ -86,8 +84,6 @@ class UserRepository {
             false
         }
     }
-
-    // --- العمليات على (Favorites, Watchlist, Done) ---
 
     suspend fun addToFavorites(courseId: String) {
         val uid = getCurrentUid() ?: return
@@ -119,27 +115,25 @@ class UserRepository {
         users.document(uid).update("doneCourses", FieldValue.arrayRemove(courseId)).await()
     }
 
-    // --- دوال المزامنة مع Room  ---
-
     suspend fun syncFavoritesWithRoom(roomFavorites: List<String>) {
         val uid = getCurrentUid() ?: return
         try {
             users.document(uid).update("favorites", roomFavorites).await()
-        } catch (e: Exception) { /* Log error */ }
+        } catch (_: Exception) {}
     }
 
     suspend fun syncWatchlistWithRoom(roomWatchlist: List<String>) {
         val uid = getCurrentUid() ?: return
         try {
             users.document(uid).update("watchlist", roomWatchlist).await()
-        } catch (e: Exception) { /* Log error */ }
+        } catch (_: Exception) {}
     }
 
     suspend fun syncDoneCoursesWithRoom(roomDoneCourses: List<String>) {
         val uid = getCurrentUid() ?: return
         try {
             users.document(uid).update("doneCourses", roomDoneCourses).await()
-        } catch (e: Exception) { /* Log error */ }
+        } catch (_: Exception) {}
     }
 
     fun listenToUserRealtime(userId: String, onChange: (Map<String, Any>?) -> Unit) {

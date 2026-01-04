@@ -51,19 +51,14 @@ fun YouScreen(
     courseViewModel: CourseViewModel
 ) {
     val context = LocalContext.current
-
     val user by userViewModel.currentUser
     val errorMessage by userViewModel.errorMessage
-
     val favoriteCourses by courseViewModel.favoriteCourses.observeAsState(emptyList())
     val watchLaterCourses by courseViewModel.watchLaterCourses.observeAsState(emptyList())
     val doneCourses by courseViewModel.doneCourses.observeAsState(emptyList())
-
     val isSyncing by courseViewModel.isSyncing.observeAsState(false)
     val syncMessage by courseViewModel.syncMessage.observeAsState()
-
     var showToastOnlyForManualSync by remember { mutableStateOf(false) }
-
     val scrollState = rememberScrollState()
     val todoViewModel: ToDoViewModel = viewModel()
 
@@ -79,9 +74,7 @@ fun YouScreen(
 
     LaunchedEffect(syncMessage) {
         syncMessage?.let { msg ->
-            if (showToastOnlyForManualSync) {
-                showGreenTextToast(context, msg)
-            }
+            if (showToastOnlyForManualSync) showGreenTextToast(context, msg)
             courseViewModel.clearSyncMessage()
             showToastOnlyForManualSync = false
         }
@@ -90,7 +83,11 @@ fun YouScreen(
     if (user == null) {
         if (!errorMessage.isNullOrEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "Error: $errorMessage", color = Color.Red, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "Error: $errorMessage",
+                    color = Color.Red,
+                    fontWeight = FontWeight.Bold
+                )
             }
         } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -99,7 +96,11 @@ fun YouScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     CircularProgressIndicator(color = PrimaryColor)
-                    Text(text = "Loading user data...", color = Color.Gray, fontWeight = FontWeight.Medium)
+                    Text(
+                        text = "Loading user data...",
+                        color = Color.Gray,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         }
@@ -107,7 +108,6 @@ fun YouScreen(
     }
 
     Scaffold { padding ->
-
         Column(
             modifier = Modifier
                 .padding(padding)
@@ -115,12 +115,7 @@ fun YouScreen(
                 .background(AppBackgroundColor)
                 .verticalScroll(scrollState)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
@@ -129,7 +124,6 @@ fun YouScreen(
                         isSyncing = isSyncing,
                         onRefresh = {
                             showToastOnlyForManualSync = true
-
                             user?.let {
                                 courseViewModel.syncCoursesFromFirestore(
                                     favIds = it.favorites,
@@ -156,9 +150,7 @@ fun YouScreen(
                             AsyncImage(
                                 model = user!!.imageUrl,
                                 contentDescription = "Profile",
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(CircleShape)
+                                modifier = Modifier.fillMaxSize().clip(CircleShape)
                             )
                         } else {
                             Text(
@@ -174,9 +166,21 @@ fun YouScreen(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Spacer(Modifier.height(8.dp))
-                        Text(user!!.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                        Text(user!!.email, color = Color.Gray, style = MaterialTheme.typography.bodySmall)
-                        Text(user!!.phone, color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            user!!.name,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                        Text(
+                            user!!.email,
+                            color = Color.Gray,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            user!!.phone,
+                            color = Color.Gray,
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
 
@@ -188,7 +192,11 @@ fun YouScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor)
                 ) {
-                    Text("Edit Profile", color = Color.White, style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Edit Profile",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                 }
 
                 Spacer(Modifier.height(24.dp))
@@ -239,7 +247,12 @@ fun YouScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
                 ) {
-                    Text("Logout", color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        "Logout",
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
 
                 if (showLogoutDialog) {
@@ -253,7 +266,6 @@ fun YouScreen(
                                     todoViewModel.clearAllTasks()
                                     courseViewModel.clearInternalCache()
                                     courseViewModel.clearDatabaseForUser()
-
                                     userViewModel.logout {
                                         navController.navigate("login") {
                                             popUpTo(0) { inclusive = true }
@@ -261,9 +273,7 @@ fun YouScreen(
                                     }
                                     showLogoutDialog = false
                                 }
-                            ) {
-                                Text("Yes", color = Color.Red, fontWeight = FontWeight.Bold)
-                            }
+                            ) { Text("Yes", color = Color.Red, fontWeight = FontWeight.Bold) }
                         },
                         dismissButton = {
                             TextButton(onClick = { showLogoutDialog = false }) { Text("No") }
@@ -292,10 +302,7 @@ private fun AnimatedRefreshButton(
         label = "rotation"
     )
 
-    IconButton(
-        onClick = onRefresh,
-        enabled = !isSyncing
-    ) {
+    IconButton(onClick = onRefresh, enabled = !isSyncing) {
         Icon(
             imageVector = Icons.Default.Refresh,
             contentDescription = "Refresh",
@@ -324,9 +331,7 @@ fun ProfileCoursesSection(
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { expanded = !expanded }
+                modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded }
             ) {
                 Icon(icon, contentDescription = null, tint = PrimaryColor)
                 Spacer(Modifier.width(8.dp))
@@ -354,9 +359,7 @@ fun ProfileCoursesSection(
             if (expanded) {
                 if (courses.isEmpty()) {
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(80.dp),
+                        modifier = Modifier.fillMaxWidth().height(80.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -409,9 +412,7 @@ fun ProfileStatsSection(
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
-
             Spacer(Modifier.height(16.dp))
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -426,11 +427,7 @@ fun ProfileStatsSection(
 }
 
 @Composable
-fun StatItem(
-    count: Int,
-    label: String,
-    color: Color
-) {
+fun StatItem(count: Int, label: String, color: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = count.toString(),
@@ -452,15 +449,12 @@ private fun showGreenTextToast(context: Context, message: String) {
         setTextColor(0xFF2E7D32.toInt())
         textSize = 14f
         setPadding(48, 22, 48, 22)
-
         background = GradientDrawable().apply {
             setColor(android.graphics.Color.WHITE)
             cornerRadius = 36f
         }
-
         elevation = 6f
     }
-
     Toast(context).apply {
         duration = Toast.LENGTH_SHORT
         view = tv
@@ -468,4 +462,3 @@ private fun showGreenTextToast(context: Context, message: String) {
         show()
     }
 }
-

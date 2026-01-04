@@ -53,5 +53,4 @@ interface CourseDao {
 
     @Query("DELETE FROM course_table WHERE userId = :userId")
     suspend fun clearAllUserData(userId: String)
-
 }
