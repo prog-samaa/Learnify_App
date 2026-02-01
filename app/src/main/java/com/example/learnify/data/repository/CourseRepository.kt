@@ -15,7 +15,7 @@ class CourseRepository(
     private val dao: CourseDao
 ) {
 
-    private val apiKey = "AIzaSyB-CrRrAmFeTflSjCoaUotHX42nxRFnml4"
+    private val apiKey = "API Key"
 
     private fun getUid(): String =
         FirebaseAuth.getInstance().currentUser?.uid ?: ""
