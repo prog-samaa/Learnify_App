@@ -9,6 +9,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -50,6 +53,9 @@ fun EditProfileScreen(
     var currentPasswordError by remember { mutableStateOf("") }
     var passwordMatchError by remember { mutableStateOf("") }
     var passwordRequirementsError by remember { mutableStateOf("") }
+    var showCurrentPassword by remember { mutableStateOf(false) }
+    var showNewPassword by remember { mutableStateOf(false) }
+    var showConfirmPassword by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel.errorMessage.value) {
         viewModel.errorMessage.value?.let { error ->
@@ -100,7 +106,9 @@ fun EditProfileScreen(
         val isPasswordMatchValid = validatePasswordMatch()
         val isCurrentPasswordValid = validateCurrentPassword()
         val isPasswordRequirementsValid = validatePasswordRequirements()
-        return isPasswordMatchValid && isCurrentPasswordValid && isPasswordRequirementsValid
+        return isPasswordMatchValid &&
+                isCurrentPasswordValid &&
+                isPasswordRequirementsValid
     }
 
     Scaffold(
@@ -108,7 +116,7 @@ fun EditProfileScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "Edit Profile",
+                        text = "Edit Profile",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -134,7 +142,7 @@ fun EditProfileScreen(
                 .background(AppBackgroundColor)
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
-        )  {
+        ) {
             Box(
                 modifier = Modifier
                     .size(80.dp)
@@ -160,7 +168,7 @@ fun EditProfileScreen(
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Card(
                 modifier = Modifier
@@ -190,7 +198,7 @@ fun EditProfileScreen(
                         shape = RoundedCornerShape(12.dp)
                     )
 
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
                         value = phone,
@@ -202,7 +210,7 @@ fun EditProfileScreen(
                 }
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Card(
                 modifier = Modifier
@@ -231,7 +239,23 @@ fun EditProfileScreen(
                             currentPasswordError = ""
                         },
                         label = { Text("Current Password") },
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation =
+                            if (showCurrentPassword) VisualTransformation.None
+                            else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(
+                                onClick = { showCurrentPassword = !showCurrentPassword }
+                            ) {
+                                Icon(
+                                    imageVector =
+                                        if (showCurrentPassword)
+                                            Icons.Default.Visibility
+                                        else
+                                            Icons.Default.VisibilityOff,
+                                    contentDescription = "Toggle password visibility"
+                                )
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         isError = currentPasswordError.isNotEmpty()
@@ -248,7 +272,7 @@ fun EditProfileScreen(
                         )
                     }
 
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
                         value = passwordNew,
@@ -258,10 +282,27 @@ fun EditProfileScreen(
                             passwordRequirementsError = ""
                         },
                         label = { Text("New Password") },
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation =
+                            if (showNewPassword) VisualTransformation.None
+                            else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(
+                                onClick = { showNewPassword = !showNewPassword }
+                            ) {
+                                Icon(
+                                    imageVector =
+                                        if (showNewPassword)
+                                            Icons.Default.Visibility
+                                        else
+                                            Icons.Default.VisibilityOff,
+                                    contentDescription = "Toggle password visibility"
+                                )
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        isError = passwordMatchError.isNotEmpty() || passwordRequirementsError.isNotEmpty()
+                        isError = passwordMatchError.isNotEmpty() ||
+                                passwordRequirementsError.isNotEmpty()
                     )
 
                     if (passwordRequirementsError.isNotEmpty()) {
@@ -275,7 +316,7 @@ fun EditProfileScreen(
                         )
                     }
 
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
                         value = passwordConfirm,
@@ -284,7 +325,23 @@ fun EditProfileScreen(
                             passwordMatchError = ""
                         },
                         label = { Text("Confirm New Password") },
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation =
+                            if (showConfirmPassword) VisualTransformation.None
+                            else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(
+                                onClick = { showConfirmPassword = !showConfirmPassword }
+                            ) {
+                                Icon(
+                                    imageVector =
+                                        if (showConfirmPassword)
+                                            Icons.Default.Visibility
+                                        else
+                                            Icons.Default.VisibilityOff,
+                                    contentDescription = "Toggle password visibility"
+                                )
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         isError = passwordMatchError.isNotEmpty()
@@ -303,7 +360,7 @@ fun EditProfileScreen(
                 }
             }
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             Row(
                 modifier = Modifier
@@ -326,7 +383,7 @@ fun EditProfileScreen(
                     border = ButtonDefaults.outlinedButtonBorder
                 ) {
                     Text(
-                        "Cancel",
+                        text = "Cancel",
                         fontWeight = FontWeight.Medium,
                         fontSize = 13.sp
                     )
@@ -336,7 +393,11 @@ fun EditProfileScreen(
                     onClick = {
                         if (!validateForm()) {
                             if (passwordRequirementsError.isNotEmpty()) {
-                                Toast.makeText(context, passwordRequirementsError, Toast.LENGTH_LONG).show()
+                                Toast.makeText(
+                                    context,
+                                    passwordRequirementsError,
+                                    Toast.LENGTH_LONG
+                                ).show()
                             }
                             return@Button
                         }
@@ -345,11 +406,17 @@ fun EditProfileScreen(
                         scope.launch {
                             try {
                                 if (passwordNew.isNotEmpty()) {
-                                    val isCurrentPasswordCorrect = viewModel.verifyCurrentPassword(passwordCurrent)
+                                    val isCurrentPasswordCorrect =
+                                        viewModel.verifyCurrentPassword(passwordCurrent)
                                     if (!isCurrentPasswordCorrect) {
-                                        currentPasswordError = "Current password is incorrect"
+                                        currentPasswordError =
+                                            "Current password is incorrect"
                                         isLoading = false
-                                        Toast.makeText(context, "Current password is incorrect", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            context,
+                                            "Current password is incorrect",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                         return@launch
                                     }
                                 }
@@ -357,16 +424,35 @@ fun EditProfileScreen(
                                 viewModel.updateProfile(
                                     name = name,
                                     phone = phone,
-                                    currentPassword = passwordCurrent.takeIf { it.isNotEmpty() },
-                                    newPassword = passwordNew.takeIf { it.isNotEmpty() }
-                                ) {
+                                    currentPassword =
+                                        passwordCurrent.takeIf { it.isNotEmpty() },
+                                    newPassword =
+                                        passwordNew.takeIf { it.isNotEmpty() }
+                                ) { success, error ->
                                     isLoading = false
-                                    Toast.makeText(context, "Profile updated successfully", Toast.LENGTH_SHORT).show()
-                                    navController.popBackStack()
+
+                                    if (success) {
+                                        Toast.makeText(
+                                            context,
+                                            "Profile updated successfully",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        navController.popBackStack()
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            error ?: "Error updating profile",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
                                 }
                             } catch (e: Exception) {
                                 isLoading = false
-                                Toast.makeText(context, e.message ?: "Error updating profile", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    e.message ?: "Error updating profile",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         }
                     },
@@ -386,7 +472,7 @@ fun EditProfileScreen(
                         )
                     } else {
                         Text(
-                            "Save Changes",
+                            text = "Save Changes",
                             fontWeight = FontWeight.Medium,
                             fontSize = 13.sp
                         )

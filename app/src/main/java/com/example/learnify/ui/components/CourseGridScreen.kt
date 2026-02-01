@@ -9,14 +9,13 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.learnify.ui.viewModels.CourseViewModel
 
 @Composable
 fun CourseGridScreen(
-    cardWeight: Int = 245,
-    cardHeight: Int = 280,
+    cardWeight: Int = 255,
+    cardHeight: Int = 290,
     query: String,
     isSearch: Boolean = false,
     viewModel: CourseViewModel,
@@ -27,7 +26,9 @@ fun CourseGridScreen(
     val courses by if (isSearch) {
         viewModel.searchResults.observeAsState(emptyList())
     } else {
-        viewModel.generalCoursesByCategory(categoryKey).observeAsState(emptyList())
+        viewModel
+            .generalCoursesByCategory(categoryKey)
+            .observeAsState(emptyList())
     }
 
     val isSearchLoading by viewModel.isSearchLoading.observeAsState(false)
@@ -40,6 +41,14 @@ fun CourseGridScreen(
 
     val error = if (isSearch) searchError else generalError
 
+    var hasLoadedOnce by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isLoading) {
+        if (!isLoading) {
+            hasLoadedOnce = true
+        }
+    }
+
     LaunchedEffect(query) {
         when {
             isSearch -> viewModel.searchCoursesDirect(query)
@@ -49,11 +58,15 @@ fun CourseGridScreen(
 
     when {
         isLoading -> Loading()
+
         error != null -> UnknownError()
-        !isLoading && courses.isEmpty() -> NoCoursesUiError()
+
+        hasLoadedOnce && courses.isEmpty() -> NoCoursesUiError()
+
         else -> {
             val rows = (courses.size + 1) / 2
-            val gridHeight = (cardHeight * rows) + (16.dp.value * (rows - 1))
+            val gridHeight =
+                (cardHeight * rows) + (16.dp.value * (rows - 1))
 
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
@@ -67,7 +80,9 @@ fun CourseGridScreen(
                         cardWeight = cardWeight,
                         cardHeight = cardHeight,
                         onCourseClick = { selectedCourse ->
-                            navController.navigate("courseDetails/${selectedCourse.id}")
+                            navController.navigate(
+                                "courseDetails/${selectedCourse.id}"
+                            )
                         }
                     )
                 }

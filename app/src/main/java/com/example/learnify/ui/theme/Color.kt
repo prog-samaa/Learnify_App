@@ -6,7 +6,7 @@ val PrimaryColor = Color(0xFF610001)
 val SecondaryColor = Color(0xFFFEF7F7)
 val Light_Brown= Color(	0XFFcc8664)
 val AppBackgroundColor = Color(0xFFfdfcf5)
-
+val CircleColor = Color(0xFF7D5260)
 val CardBackgroundColor = Color(0x8BFDC2A2)
 
 val BarBackground = Color(0x45e1d1b7)

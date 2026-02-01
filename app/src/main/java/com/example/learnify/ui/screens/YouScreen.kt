@@ -38,6 +38,7 @@ import coil.compose.AsyncImage
 import com.example.learnify.data.local.CourseEntity
 import com.example.learnify.ui.components.CourseCard
 import com.example.learnify.ui.theme.AppBackgroundColor
+import com.example.learnify.ui.theme.CircleColor
 import com.example.learnify.ui.theme.PrimaryColor
 import com.example.learnify.ui.viewModels.CourseViewModel
 import com.example.learnify.ui.viewModels.ToDoViewModel
@@ -110,7 +111,6 @@ fun YouScreen(
     Scaffold { padding ->
         Column(
             modifier = Modifier
-                .padding(padding)
                 .fillMaxSize()
                 .background(AppBackgroundColor)
                 .verticalScroll(scrollState)
@@ -143,7 +143,7 @@ fun YouScreen(
                         modifier = Modifier
                             .size(80.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFF7D5260)),
+                            .background(CircleColor),
                         contentAlignment = Alignment.Center
                     ) {
                         if (user!!.imageUrl.isNotEmpty()) {

@@ -33,7 +33,6 @@ fun ForgotPasswordScreen(
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
         Spacer(modifier = Modifier.weight(1f))
 
         Text(
@@ -79,13 +78,14 @@ fun ForgotPasswordScreen(
         Button(
             onClick = {
                 if (email.isNotEmpty()) {
-                    viewModel.resetPassword(email)
-                    Toast.makeText(
-                        context,
-                        "Reset link sent! Check your email.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    navController.navigate("login")
+                    viewModel.resetPassword(email) {
+                        Toast.makeText(
+                            context,
+                            "Reset link sent! Check your email.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        navController.navigate("login")
+                    }
                 } else {
                     Toast.makeText(
                         context,
@@ -114,6 +114,15 @@ fun ForgotPasswordScreen(
                 text = "Back to Login",
                 color = PrimaryColor,
                 fontSize = 14.sp
+            )
+        }
+
+        viewModel.errorMessage.value?.let {
+            Text(
+                text = it,
+                color = Color.Red,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 8.dp)
             )
         }
 

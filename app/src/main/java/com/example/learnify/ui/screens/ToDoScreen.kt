@@ -4,9 +4,9 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Task
 import androidx.compose.material3.*
@@ -16,20 +16,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.learnify.data.local.TaskEntity
-import com.example.learnify.ui.theme.AppBackgroundColor
-import com.example.learnify.ui.theme.CardBackgroundColor
-import com.example.learnify.ui.theme.Light_Brown
-import com.example.learnify.ui.theme.PrimaryColor
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import com.example.learnify.R
-import com.example.learnify.ui.theme.SecondaryColor
+import com.example.learnify.data.local.TaskEntity
+import com.example.learnify.ui.theme.*
 import com.example.learnify.ui.viewModels.ToDoViewModel
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -41,123 +37,131 @@ fun ToDoScreen(
     var text by remember { mutableStateOf("") }
     val tasks by viewModel.tasks.collectAsState()
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(AppBackgroundColor)
     ) {
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    color = Light_Brown,
-                    shape = RoundedCornerShape(
-                        bottomStart = 24.dp,
-                        bottomEnd = 24.dp
-                    )
-                )
-                .padding(16.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    placeholder = { Text("Enter tasks...") },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.Task,
-                            contentDescription = "Tasks Icon"
-                        )
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(16.dp)),
-                    colors = TextFieldDefaults.colors(
-                        disabledContainerColor = SecondaryColor,
-                        focusedContainerColor = SecondaryColor,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        cursorColor = PrimaryColor
-                    ),
-                    shape = RoundedCornerShape(16.dp),
-                    singleLine = true
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Button(
-                    onClick = {
-                        viewModel.addTask(text)
-                        text = ""
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor),
-                    shape = RoundedCornerShape(24.dp),
-                    modifier = Modifier.height(56.dp)
-                ) {
-                    Text("Add", color = Color.White)
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
+                .background(AppBackgroundColor)
         ) {
-            if (tasks.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.to_do_background),
-                            contentDescription = "No Tasks Image",
-                            modifier = Modifier.size(220.dp)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = Light_Brown,
+                        shape = RoundedCornerShape(
+                            bottomStart = 24.dp,
+                            bottomEnd = 24.dp
                         )
+                    )
+                    .padding(16.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextField(
+                        value = text,
+                        onValueChange = { text = it },
+                        placeholder = { Text("Enter tasks...") },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Task,
+                                contentDescription = "Tasks Icon"
+                            )
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(16.dp)),
+                        colors = TextFieldDefaults.colors(
+                            disabledContainerColor = SecondaryColor,
+                            focusedContainerColor = SecondaryColor,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            cursorColor = PrimaryColor
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true
+                    )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
 
+                    Button(
+                        onClick = {
+                            viewModel.addTask(text)
+                            text = ""
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor),
+                        shape = RoundedCornerShape(24.dp),
+                        modifier = Modifier.height(56.dp)
+                    ) {
                         Text(
-                            text = "No tasks yet...",
-                            fontSize = 20.sp,
-                            color = Color.Gray,
-                            fontFamily = FontFamily(Font(R.font.playwrite))
+                            text = "Add",
+                            color = Color.White
                         )
                     }
                 }
-            } else {
-                AnimatedContent(
-                    targetState = tasks,
-                    label = ""
-                ) { list ->
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .verticalScroll(rememberScrollState())
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+            ) {
+                if (tasks.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        list.forEach { task ->
-                            AnimatedVisibility(
-                                visible = true,
-                                enter = fadeIn() + slideInVertically(),
-                                exit = fadeOut() + slideOutVertically()
-                            ) {
-                                TaskItem(
-                                    task = task,
-                                    onCheckedChange = { done ->
-                                        viewModel.toggleDone(task, done)
-                                    },
-                                    onDelete = {
-                                        viewModel.deleteTask(task)
-                                    }
-                                )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.to_do_background),
+                                contentDescription = "No Tasks Image",
+                                modifier = Modifier.size(220.dp)
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "No tasks yet...",
+                                fontSize = 20.sp,
+                                color = Color.Gray,
+                                fontFamily = FontFamily(Font(R.font.playwrite))
+                            )
+                        }
+                    }
+                } else {
+                    AnimatedContent(
+                        targetState = tasks,
+                        label = ""
+                    ) { list ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            list.forEach { task ->
+                                AnimatedVisibility(
+                                    visible = true,
+                                    enter = fadeIn() + slideInVertically(),
+                                    exit = fadeOut() + slideOutVertically()
+                                ) {
+                                    TaskItem(
+                                        task = task,
+                                        onCheckedChange = { done ->
+                                            viewModel.toggleDone(task, done)
+                                        },
+                                        onDelete = {
+                                            viewModel.deleteTask(task)
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
@@ -178,7 +182,6 @@ fun TaskItem(
             .fillMaxWidth()
             .padding(vertical = 4.dp)
     ) {
-
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),

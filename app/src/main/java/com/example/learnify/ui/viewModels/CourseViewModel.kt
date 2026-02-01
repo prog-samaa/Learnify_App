@@ -5,23 +5,24 @@ import androidx.lifecycle.*
 import com.example.learnify.data.local.CourseDatabase
 import com.example.learnify.data.local.CourseEntity
 import com.example.learnify.data.repository.CourseRepository
-import com.example.learnify.data.repository.UserRepository
 import com.example.learnify.data.repository.toEntity
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class CourseViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val dao = CourseDatabase.getDatabase(application).courseDao()
-    private val repository = CourseRepository(dao)
-    private val userRepo = UserRepository()
+    private val dao =
+        CourseDatabase.getDatabase(application).courseDao()
+
+    private val repository =
+        CourseRepository(dao)
 
     private val _currentUid =
-        MutableLiveData(FirebaseAuth.getInstance().currentUser?.uid ?: "")
+        MutableLiveData(
+            FirebaseAuth.getInstance().currentUser?.uid ?: ""
+        )
 
     private val _isSyncing = MutableLiveData(false)
     val isSyncing: LiveData<Boolean> = _isSyncing
@@ -34,13 +35,19 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     val favoriteCourses: LiveData<List<CourseEntity>> =
-        _currentUid.switchMap { repository.getFavoriteCourses() }
+        _currentUid.switchMap {
+            repository.getFavoriteCourses()
+        }
 
     val watchLaterCourses: LiveData<List<CourseEntity>> =
-        _currentUid.switchMap { repository.getWatchLaterCourses() }
+        _currentUid.switchMap {
+            repository.getWatchLaterCourses()
+        }
 
     val doneCourses: LiveData<List<CourseEntity>> =
-        _currentUid.switchMap { repository.getDoneCourses() }
+        _currentUid.switchMap {
+            repository.getDoneCourses()
+        }
 
     private fun getUid(): String =
         FirebaseAuth.getInstance().currentUser?.uid ?: ""
@@ -53,8 +60,8 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    private val _currentCourse = MutableStateFlow<CourseEntity?>(null)
-    val currentCourse: StateFlow<CourseEntity?> = _currentCourse.asStateFlow()
+    private val _currentCourse =
+        MutableStateFlow<CourseEntity?>(null)
 
     fun clearInternalCache() {
         loadedSearchQueries.clear()
@@ -83,31 +90,43 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             _isSyncing.value = true
             try {
-                val allIds = (favIds + watchIds + doneIds).distinct()
+                val allIds =
+                    (favIds + watchIds + doneIds).distinct()
+
                 val uid = getUid()
 
                 allIds.forEach { id ->
-                    val exists = repository.getCourseByIdDirect(id)
+                    val exists =
+                        repository.getCourseByIdDirect(id)
+
                     if (exists == null) {
                         repository.searchAndSave(
                             query = id,
                             categoryKey = "synced_courses"
                         )
                     } else {
-                        val updatedCourse = exists.copy(
-                            userId = uid,
-                            isFavorite = favIds.contains(id),
-                            isWatchLater = watchIds.contains(id),
-                            isDone = doneIds.contains(id)
+                        val updatedCourse =
+                            exists.copy(
+                                userId = uid,
+                                isFavorite = favIds.contains(id),
+                                isWatchLater = watchIds.contains(id),
+                                isDone = doneIds.contains(id)
+                            )
+
+                        dao.insertCourses(
+                            listOf(updatedCourse)
                         )
-                        dao.insertCourses(listOf(updatedCourse))
                     }
                 }
 
-                _syncMessage.postValue("Updated successfully ✅")
+                _syncMessage.postValue(
+                    "Updated successfully ✅"
+                )
             } catch (e: Exception) {
                 _syncMessage.postValue(
-                    "Update failed: ${e.message ?: "Unknown error"}"
+                    "Update failed: ${
+                        e.message ?: "Unknown error"
+                    }"
                 )
             } finally {
                 delay(250)
@@ -118,50 +137,83 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
 
     fun loadCourse(courseId: String) {
         viewModelScope.launch {
-            _currentCourse.value = repository.getCourseByIdDirect(courseId)
+            _currentCourse.value =
+                repository.getCourseByIdDirect(courseId)
         }
     }
 
-    private val _searchResults = MutableLiveData<List<CourseEntity>>()
-    val searchResults: LiveData<List<CourseEntity>> = _searchResults
+    private val _searchResults =
+        MutableLiveData<List<CourseEntity>>()
 
-    private val _isTrendingLoading = MutableLiveData(false)
-    val isTrendingLoading: LiveData<Boolean> = _isTrendingLoading
+    val searchResults: LiveData<List<CourseEntity>> =
+        _searchResults
 
-    private val _isSearchLoading = MutableLiveData(false)
-    val isSearchLoading: LiveData<Boolean> = _isSearchLoading
+    private val _isTrendingLoading =
+        MutableLiveData(false)
 
-    private val _isGeneralLoading = MutableLiveData(false)
-    val isGeneralLoading: LiveData<Boolean> = _isGeneralLoading
+    val isTrendingLoading: LiveData<Boolean> =
+        _isTrendingLoading
 
-    private val _trendingError = MutableLiveData<String?>(null)
-    val trendingError: LiveData<String?> = _trendingError
+    private val _isSearchLoading =
+        MutableLiveData(false)
 
-    private val _searchError = MutableLiveData<String?>(null)
-    val searchError: LiveData<String?> = _searchError
+    val isSearchLoading: LiveData<Boolean> =
+        _isSearchLoading
 
-    private val _generalError = MutableLiveData<String?>(null)
-    val generalError: LiveData<String?> = _generalError
+    private val _isGeneralLoading =
+        MutableLiveData(false)
 
-    private val loadedSearchQueries = mutableSetOf<String>()
-    private val loadedTrending = mutableSetOf<String>()
+    val isGeneralLoading: LiveData<Boolean> =
+        _isGeneralLoading
 
-    fun generalCoursesByCategory(category: String): LiveData<List<CourseEntity>> =
+    private val _trendingError =
+        MutableLiveData<String?>(null)
+
+    val trendingError: LiveData<String?> =
+        _trendingError
+
+    private val _searchError =
+        MutableLiveData<String?>(null)
+
+    val searchError: LiveData<String?> =
+        _searchError
+
+    private val _generalError =
+        MutableLiveData<String?>(null)
+
+    val generalError: LiveData<String?> =
+        _generalError
+
+    private val loadedSearchQueries =
+        mutableSetOf<String>()
+
+    private val loadedTrending =
+        mutableSetOf<String>()
+
+    fun generalCoursesByCategory(
+        category: String
+    ): LiveData<List<CourseEntity>> =
         repository.getCoursesByCategory(category)
 
-    fun getCourseById(id: String): LiveData<CourseEntity> =
+    fun getCourseById(
+        id: String
+    ): LiveData<CourseEntity> =
         repository.getCourseById(id)
 
     fun searchCourses(query: String) {
         val q = query.trim()
         if (q.isEmpty() || loadedSearchQueries.contains(q)) return
 
-        val categoryKey = detectCategoryKeyFromQuery(q)
+        val categoryKey =
+            detectCategoryKeyFromQuery(q)
 
         viewModelScope.launch {
             _isGeneralLoading.value = true
             try {
-                repository.searchAndSave(q, categoryKey)
+                repository.searchAndSave(
+                    q,
+                    categoryKey
+                )
                 loadedSearchQueries.add(q)
                 _generalError.value = null
             } catch (e: Exception) {
@@ -185,11 +237,14 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             _isTrendingLoading.value = true
             try {
-                val api = repository.getTrendingFromAPI(id)
+                val api =
+                    repository.getTrendingFromAPI(id)
+
                 if (api.isNotEmpty()) {
                     repository.saveTrending(api, id)
                     loadedTrending.add(id)
                 }
+
                 _trendingError.value = null
             } catch (e: Exception) {
                 _trendingError.value = e.message
@@ -199,22 +254,29 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun trendingCourses(category: String): LiveData<List<CourseEntity>> =
+    fun trendingCourses(
+        category: String
+    ): LiveData<List<CourseEntity>> =
         repository.getTrendingLive(category)
 
     fun searchCoursesDirect(query: String) {
         viewModelScope.launch {
             _isSearchLoading.value = true
             try {
-                val result = repository.searchDirect(query)
+                val result =
+                    repository.searchDirect(query)
+
                 val uid = getUid()
-                val entities = result.map {
-                    it.toEntity(
-                        userId = uid,
-                        isTrending = false,
-                        category = "search"
-                    )
-                }
+
+                val entities =
+                    result.map {
+                        it.toEntity(
+                            userId = uid,
+                            isTrending = false,
+                            category = "search"
+                        )
+                    }
+
                 dao.insertCourses(entities)
                 _searchResults.value = entities
                 _searchError.value = null
@@ -226,28 +288,48 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun toggleFavorite(courseId: String, currentStatus: Boolean) {
+    fun toggleFavorite(
+        courseId: String,
+        currentStatus: Boolean
+    ) {
         viewModelScope.launch {
-            repository.toggleFavorite(courseId, !currentStatus)
+            repository.toggleFavorite(
+                courseId,
+                !currentStatus
+            )
             loadCourse(courseId)
         }
     }
 
-    fun toggleWatchLater(courseId: String, currentStatus: Boolean) {
+    fun toggleWatchLater(
+        courseId: String,
+        currentStatus: Boolean
+    ) {
         viewModelScope.launch {
-            repository.toggleWatchLater(courseId, !currentStatus)
+            repository.toggleWatchLater(
+                courseId,
+                !currentStatus
+            )
             loadCourse(courseId)
         }
     }
 
-    fun toggleDone(courseId: String, currentStatus: Boolean) {
+    fun toggleDone(
+        courseId: String,
+        currentStatus: Boolean
+    ) {
         viewModelScope.launch {
-            repository.toggleDone(courseId, !currentStatus)
+            repository.toggleDone(
+                courseId,
+                !currentStatus
+            )
             loadCourse(courseId)
         }
     }
 
-    fun detectCategoryKeyFromQuery(query: String): String {
+    fun detectCategoryKeyFromQuery(
+        query: String
+    ): String {
         val q = query.lowercase()
         return when {
             "program" in q -> "programming"
@@ -257,7 +339,11 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
             "language" in q -> "language"
             "human" in q || "development" in q -> "human_dev"
             q == "courses" || q == "home" -> "home"
-            else -> q.replace("""\s+""".toRegex(), "_")
+            else ->
+                q.replace(
+                    """\s+""".toRegex(),
+                    "_"
+                )
         }
     }
 }

@@ -13,7 +13,6 @@ import kotlinx.coroutines.launch
 class UserViewModel : ViewModel() {
 
     private val repo = UserRepository()
-
     val isSuccess = mutableStateOf(false)
     val isLoggedIn = mutableStateOf(false)
     val errorMessage = mutableStateOf<String?>(null)
@@ -30,6 +29,7 @@ class UserViewModel : ViewModel() {
     private fun observeCurrentUser() {
         val firebaseUser = repo.getCurrentUser() ?: return
         val uid = firebaseUser.uid
+
         repo.listenToUserRealtime(uid) { data ->
             if (data != null) {
                 currentUser.value = User(
@@ -47,7 +47,12 @@ class UserViewModel : ViewModel() {
         }
     }
 
-    fun register(name: String, email: String, phone: String, password: String) {
+    fun register(
+        name: String,
+        email: String,
+        phone: String,
+        password: String
+    ) {
         viewModelScope.launch {
             try {
                 repo.registerUser(name, email, phone, password)
@@ -72,16 +77,33 @@ class UserViewModel : ViewModel() {
             } catch (e: Exception) {
                 errorMessage.value = when (e) {
                     is FirebaseAuthInvalidCredentialsException,
-                    is FirebaseAuthInvalidUserException -> "Incorrect email or password!"
-                    is FirebaseNetworkException -> "Please check your internet connection"
-                    else -> e.message ?: "Login failed!"
+                    is FirebaseAuthInvalidUserException ->
+                        "Incorrect email or password!"
+                    is FirebaseNetworkException ->
+                        "Please check your internet connection"
+                    else ->
+                        e.message ?: "Login failed!"
                 }
             }
         }
     }
 
-    fun resetPassword(email: String) {
-        repo.resetPassword(email)
+    fun resetPassword(email: String, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                repo.resetPassword(email)
+                onSuccess()
+            } catch (e: Exception) {
+                errorMessage.value = when (e) {
+                    is FirebaseAuthInvalidUserException ->
+                        "This email is not registered"
+                    is FirebaseNetworkException ->
+                        "Please check your internet connection"
+                    else ->
+                        e.message ?: "Failed to send reset email"
+                }
+            }
+        }
     }
 
     suspend fun verifyCurrentPassword(currentPassword: String): Boolean {
@@ -107,29 +129,17 @@ class UserViewModel : ViewModel() {
         }
     }
 
-    fun changePassword(currentPassword: String, newPassword: String) {
-        viewModelScope.launch {
-            try {
-                val ok = repo.verifyPassword(currentPassword)
-                if (!ok) {
-                    errorMessage.value = "Wrong current password"
-                    return@launch
-                }
-                repo.updateUserPassword(newPassword)
-            } catch (e: Exception) {
-                errorMessage.value = e.message
-            }
-        }
+    suspend fun updateNameAndPhone(name: String, phone: String) {
+        repo.updateUserInfo(name, phone)
     }
 
-    fun updateNameAndPhone(name: String, phone: String) {
-        viewModelScope.launch {
-            try {
-                repo.updateUserInfo(name, phone)
-            } catch (e: Exception) {
-                errorMessage.value = e.message
-            }
-        }
+    suspend fun changePasswordInternal(
+        currentPassword: String,
+        newPassword: String
+    ) {
+        val ok = repo.verifyPassword(currentPassword)
+        if (!ok) throw Exception("Wrong current password")
+        repo.updateUserPassword(newPassword)
     }
 
     fun updateProfile(
@@ -137,17 +147,19 @@ class UserViewModel : ViewModel() {
         phone: String,
         currentPassword: String? = null,
         newPassword: String? = null,
-        onDone: () -> Unit
+        onResult: (Boolean, String?) -> Unit
     ) {
         viewModelScope.launch {
             try {
                 updateNameAndPhone(name, phone)
+
                 if (!newPassword.isNullOrEmpty() && !currentPassword.isNullOrEmpty()) {
-                    changePassword(currentPassword, newPassword)
+                    changePasswordInternal(currentPassword, newPassword)
                 }
-                onDone()
+
+                onResult(true, null)
             } catch (e: Exception) {
-                errorMessage.value = e.message
+                onResult(false, e.message)
             }
         }
     }

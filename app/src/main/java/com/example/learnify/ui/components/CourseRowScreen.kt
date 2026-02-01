@@ -25,9 +25,16 @@ fun CourseRowScreen(
     val categoryKey = viewModel.detectCategoryKeyFromQuery(query)
 
     val courses by when {
-        isTrending -> viewModel.trendingCourses(query).observeAsState(emptyList())
-        isSearch -> viewModel.searchResults.observeAsState(emptyList())
-        else -> viewModel.generalCoursesByCategory(categoryKey).observeAsState(emptyList())
+        isTrending ->
+            viewModel.trendingCourses(query).observeAsState(emptyList())
+
+        isSearch ->
+            viewModel.searchResults.observeAsState(emptyList())
+
+        else ->
+            viewModel
+                .generalCoursesByCategory(categoryKey)
+                .observeAsState(emptyList())
     }
 
     val isTrendingLoading by viewModel.isTrendingLoading.observeAsState(false)
@@ -50,6 +57,14 @@ fun CourseRowScreen(
         else -> generalError
     }
 
+    var hasLoadedOnce by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isLoading) {
+        if (!isLoading) {
+            hasLoadedOnce = true
+        }
+    }
+
     LaunchedEffect(query, isTrending) {
         when {
             isTrending -> viewModel.getTrendingCourses(query)
@@ -60,26 +75,38 @@ fun CourseRowScreen(
 
     when {
         isLoading -> Loading()
+
         error != null -> UnknownError()
-        !isLoading && courses.isEmpty() -> NoCoursesUiError()
-        else -> LazyRow(modifier = Modifier.padding(8.dp)) {
-            items(courses) { course ->
-                if (isTrending) {
-                    TrendingCourseCard(
-                        course = course,
-                        onCourseClick = { selectedCourse ->
-                            navController.navigate("courseDetails/${selectedCourse.id}")
-                        }
-                    )
-                } else {
-                    CourseCard(
-                        course = course,
-                        cardWeight = cardWeight,
-                        cardHeight = cardHeight,
-                        onCourseClick = { selectedCourse ->
-                            navController.navigate("courseDetails/${selectedCourse.id}")
-                        }
-                    )
+
+        hasLoadedOnce && courses.isEmpty() ->
+            NoCoursesUiError()
+
+        else -> {
+            LazyRow(
+                modifier = Modifier.padding(8.dp)
+            ) {
+                items(courses) { course ->
+                    if (isTrending) {
+                        TrendingCourseCard(
+                            course = course,
+                            onCourseClick = { selectedCourse ->
+                                navController.navigate(
+                                    "courseDetails/${selectedCourse.id}"
+                                )
+                            }
+                        )
+                    } else {
+                        CourseCard(
+                            course = course,
+                            cardWeight = cardWeight,
+                            cardHeight = cardHeight,
+                            onCourseClick = { selectedCourse ->
+                                navController.navigate(
+                                    "courseDetails/${selectedCourse.id}"
+                                )
+                            }
+                        )
+                    }
                 }
             }
         }
